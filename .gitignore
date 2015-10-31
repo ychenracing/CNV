@@ -1,4 +1,12 @@
+#folders
+bin/
+
+#class files
 *.class
+
+#mac hidden files
+.DS_Store
+*.DS_Store
 
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
