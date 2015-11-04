@@ -1,14 +1,44 @@
 package utils;
 
 public class Region implements Comparable<Region> {
-    public String chr;
-    public int    start;
-    public int    end;
+    private String chr;
+    private int    start;
+    private int    end;
+
+    public String getChr() {
+        return chr;
+    }
+
+    public void setChr(String chr) {
+        this.chr = chr;
+    }
+
+    public int getStart() {
+        return start;
+    }
+
+    public void setStart(int start) {
+        this.start = start;
+    }
+
+    public int getEnd() {
+        return end;
+    }
+
+    public void setEnd(int end) {
+        this.end = end;
+    }
 
     public Region(String chr, int start, int end) {
         this.chr = chr;
         this.start = start;
         this.end = end;
+    }
+
+    public Region(String chr, String start, String end) {
+        this.chr = chr;
+        this.start = Integer.parseInt(start);
+        this.end = Integer.parseInt(end);
     }
 
     @Override

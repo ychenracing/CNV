@@ -37,19 +37,19 @@ public class EstimateCaseControlRate {
         recordStartEndPoint("/Users/racing/Lab/CNV/SeqCNV/ychen/cnvoutput3/tumor", true);
         recordStartEndPoint("/Users/racing/Lab/CNV/SeqCNV/ychen/cnvoutput3/control", false);
         countReadsForChrs();
-        readSimulatedRegions("/Users/racing/Lab/(2015-09-22)CNV结果/simulatedRegions.txt");
+        readSimulatedRegions("/Users/racing/Lab/(2015-09-22)CNV/simulatedRegions.txt");
         countRegionReadsRatio("/Users/racing/Lab/CNV/SeqCNV_report.txt");
         recordCaseControlReadsRatio("/Users/racing/Lab/CNV");
     }
 
     public static boolean judgeInSimulatedRegions(Region region) {
         for (Region item : simulatedRegionList) {
-            if (region.chr.equals(item.chr)) {
-                if (region.start >= item.start && region.start <= item.end
-                    || region.end >= item.start && region.end <= item.end) {
+            if (region.getChr().equals(item.getChr())) {
+                if (region.getStart() >= item.getStart() && region.getStart() <= item.getEnd()
+                    || region.getEnd() >= item.getStart() && region.getEnd() <= item.getEnd()) {
                     return true;
                 }
-                if (region.start <= item.start && region.end >= item.end) {
+                if (region.getStart() <= item.getStart() && region.getEnd() >= item.getEnd()) {
                     return true;
                 }
             }
@@ -92,7 +92,7 @@ public class EstimateCaseControlRate {
 
         // 首先计算每条染色体的reads数量为library size的正则化
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(chrLibrarySize))) {
-            String header = "#chr\tstart\tend\tTPorFP\tpre_ratio\tratio\n";
+            String header = "#chr\tstart\tend\tcase_reads_num\tcontrol_reads_num\tTPorFP\tpre_ratio\tratio\n";
             bw.write(header, 0, header.length());
             System.out.println(header);
             regionReadNum.entrySet().stream().forEach(entry -> {
@@ -104,26 +104,34 @@ public class EstimateCaseControlRate {
                         break;
                     }
                 }
-                String writeString = region.toString() + "\t" + trueOrFalsePositive + "\t";
+                StringBuilder writeString = new StringBuilder(region.toString()).append("\t");
                 Pair<Float, Pair<Integer, Integer>> pair = entry.getValue();
-                writeString += pair.getFirst() + "\t";
                 Pair<Integer, Integer> readsNum = pair.getSecond();
-                float readsRatio = (float) readsNum.getFirst() / readsNum.getSecond();
-                float librarySizeRatio = (float) chrReadNum.get(entry.getKey().chr).getSecond()
-                                         / chrReadNum.get(entry.getKey().chr).getFirst();
+
+                int caseReadsNum = readsNum.getFirst();
+                int controlReadsNum = readsNum.getSecond();
+                int chrCaseReadsNum = chrReadNum.get(entry.getKey().getChr()).getFirst();
+                int chrControlReadsNum = chrReadNum.get(entry.getKey().getChr()).getSecond();
+                float seqcnvPredictRatio = pair.getFirst();
+
+                float readsRatio = (float) caseReadsNum / controlReadsNum;
+                float librarySizeRatio = (float) chrControlReadsNum / chrCaseReadsNum;
                 float ratio = readsRatio * librarySizeRatio;
-                //                float ratio = readsRatio;
-                System.out.println(region + "\tcaseReadsNum:" + readsNum.getFirst()
-                                   + " controlReadsNum:" + readsNum.getSecond());
-                System.out
-                    .println("chrCaseReadsSum:" + chrReadNum.get(entry.getKey().chr).getFirst()
-                             + "\tchrControlReadsSum:"
-                             + chrReadNum.get(entry.getKey().chr).getSecond());
+
+                System.out.println(region + "\tcaseReadsNum:" + caseReadsNum + "\tcontrolReadsNum:"
+                                   + controlReadsNum);
+                System.out.println("chrCaseReadsSum:" + chrCaseReadsNum + "\tchrControlReadsSum:"
+                                   + chrControlReadsNum);
                 System.out.println("chrLibrarySizeRatio:" + librarySizeRatio);
-                writeString += String.format("%.3f", ratio) + "\n";
+
+                writeString.append(caseReadsNum).append("\t");
+                writeString.append(controlReadsNum).append("\t");
+                writeString.append(trueOrFalsePositive).append("\t");
+                writeString.append(seqcnvPredictRatio).append("\t");
+                writeString.append(String.format("%.3f", ratio)).append("\n");
                 try {
-                    bw.write(writeString, 0, writeString.length());
-                    System.out.println(writeString);
+                    bw.write(writeString.toString(), 0, writeString.length());
+                    System.out.println(writeString.toString().trim());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -146,7 +154,7 @@ public class EstimateCaseControlRate {
         System.out.println("librarySizeRatio:" + librarySizeRatio);
 
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(totalLibrarySize))) {
-            String header = "#chr\tstart\tend\tTPorFP\tpre_ratio\tratio\n";
+            String header = "#chr\tstart\tend\tcase_reads_num\tcontrol_reads_num\tTPorFP\tpre_ratio\tratio\n";
             bw.write(header, 0, header.length());
             System.out.println(header);
             regionReadNum.entrySet().stream().forEach(entry -> {
@@ -158,17 +166,24 @@ public class EstimateCaseControlRate {
                         break;
                     }
                 }
-                String writeString = region.toString() + "\t" + trueOrFalsePositive + "\t";
+                StringBuilder writeString = new StringBuilder(region.toString()).append("\t");
+
                 Pair<Float, Pair<Integer, Integer>> pair = entry.getValue();
-                writeString += pair.getFirst() + "\t";
                 Pair<Integer, Integer> readsNum = pair.getSecond();
-                float readsRatio = (float) readsNum.getFirst() / readsNum.getSecond();
+                int caseReadsNum = readsNum.getFirst();
+                int controlReadsNum = readsNum.getSecond();
+                float readsRatio = (float) caseReadsNum / controlReadsNum;
                 float ratio = readsRatio * librarySizeRatio;
-                //                float ratio = readsRatio;
-                writeString += String.format("%.3f", ratio) + "\n";
+                float seqcnvPredictRatio = pair.getFirst();
+
+                writeString.append(caseReadsNum).append("\t");
+                writeString.append(controlReadsNum).append("\t");
+                writeString.append(seqcnvPredictRatio).append("\t");
+                writeString.append(trueOrFalsePositive).append("\t");
+                writeString.append(String.format("%.3f", ratio)).append("\n");
                 try {
-                    bw.write(writeString, 0, writeString.length());
-                    System.out.println(writeString);
+                    bw.write(writeString.toString(), 0, writeString.length());
+                    System.out.println(writeString.toString().trim());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
