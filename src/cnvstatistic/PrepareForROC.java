@@ -158,7 +158,7 @@ public class PrepareForROC {
             tnLength = this.allReadsLength - this.simulatedLength - fpLength;
 
             System.out.println("seqcnvPredictedLength: " + this.seqcnvRegions.stream()
-                .map(region -> region.getEnd() - region.getStart()).reduce(0, (x, y) -> x + y));
+                .map(region -> region.getEnd() - region.getStart()).reduce(0L, (x, y) -> x + y));
             System.out.println("allReadsLength: " + this.allReadsLength);
             System.out.println("simulatedLength: " + this.simulatedLength);
             System.out.println("fpLength: " + fpLength);
@@ -256,7 +256,7 @@ public class PrepareForROC {
             tnLength = this.allReadsLength - this.simulatedLength - fpLength;
 
             System.out.println("coniferPredictedLength: " + this.coniferRegions.stream()
-                .map(region -> region.getEnd() - region.getStart()).reduce(0, (x, y) -> x + y));
+                .map(region -> region.getEnd() - region.getStart()).reduce(0L, (x, y) -> x + y));
             System.out.println("allReadsLength: " + this.allReadsLength);
             System.out.println("simulatedLength: " + this.simulatedLength);
             System.out.println("fpLength: " + fpLength);
@@ -336,7 +336,7 @@ public class PrepareForROC {
             tnLength = this.allReadsLength - this.simulatedLength - fpLength;
 
             System.out.println("cnvnatorPredictedLength: " + this.cnvnatorRegions.stream()
-                .map(region -> region.getEnd() - region.getStart()).reduce(0, (x, y) -> x + y));
+                .map(region -> region.getEnd() - region.getStart()).reduce(0L, (x, y) -> x + y));
             System.out.println("allReadsLength: " + this.allReadsLength);
             System.out.println("simulatedLength: " + this.simulatedLength);
             System.out.println("fpLength: " + fpLength);
@@ -432,7 +432,7 @@ public class PrepareForROC {
         tnLength.set(this.allReadsLength - this.simulatedLength - fpLength.get());
 
         System.out.println("cnverPredictedLength: " + this.cnverRegions.stream()
-            .map(region -> region.getEnd() - region.getStart()).reduce(0, (x, y) -> x + y));
+            .map(region -> region.getEnd() - region.getStart()).reduce(0L, (x, y) -> x + y));
         System.out.println("allReadsLength: " + this.allReadsLength);
         System.out.println("simulatedLength: " + this.simulatedLength);
         System.out.println("fpLength: " + fpLength);
