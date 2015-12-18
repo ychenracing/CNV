@@ -14,9 +14,8 @@ import utils.Region;
 public class CopyTargetNotation {
 
     public static void main(String[] args) {
-        copyTargetNotation("C:\\Users\\Administrator\\Desktop\\chr1_chr4.bed",
-            "C:\\Users\\Administrator\\Desktop\\chr1_chr4_merged_3col.bed",
-            "C:\\Users\\Administrator\\Desktop\\chr1_chr4_merged_notated.bed");
+        copyTargetNotation("/home/chen/CNV/placenta.bed", "/home/chen/CNV/placenta_merged.bed",
+            "/home/chen/CNV/placenta_merged_notated.bed");
     }
 
     /**
@@ -42,7 +41,7 @@ public class CopyTargetNotation {
             String srcLine = srcLines.get(srcIndex++);
             String[] srcFeature = srcLine.split("\\s+");
             String lastAppendString = "\t" + srcFeature[3] + "\t" + srcFeature[4] + "\t"
-                                      + srcFeature[5] + "\n";
+                                      + srcFeature[5];
             String appendString = null;
             for (String targetLine : targetLines) {
                 String[] targetFeature = targetLine.split("\\s+");
@@ -52,10 +51,10 @@ public class CopyTargetNotation {
                     srcLine = srcLines.get(srcIndex++);
                     srcFeature = srcLine.split("\\s+");
                     appendString = "\t" + srcFeature[3] + "\t" + srcFeature[4] + "\t"
-                                   + srcFeature[5] + "\n";
+                                   + srcFeature[5];
                     Region srcRegion = new Region(srcFeature[0], srcFeature[1], srcFeature[2]);
                     if (!targetRegion.intersact(srcRegion)) {
-                        String writeString = targetRegion + lastAppendString;
+                        String writeString = targetRegion + lastAppendString + "\n";
                         lastAppendString = appendString;
                         bw.write(writeString);
                         targetIndex++;
@@ -64,10 +63,14 @@ public class CopyTargetNotation {
                         srcIndex++;
                     }
                 }
-                if (srcIndex == srcLines.size()) {
-                    String writeString = targetRegion + appendString;
+                if (srcIndex >= srcLines.size()) {
+                    String writeString = targetRegion + appendString + "\n";
                     bw.write(writeString);
                     targetIndex++;
+                }
+                if (targetIndex % 100 == 0) {
+                    System.out.print("\r" + String.format("%.2f",
+                        ((float) targetIndex / targetLines.size()) * 100));
                 }
             }
         } catch (IOException e) {
@@ -78,7 +81,7 @@ public class CopyTargetNotation {
 
     /**
      * read lines from file.
-     * 
+     *
      * @param filePath
      * @return lines of the file.
      */
