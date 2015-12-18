@@ -16,6 +16,11 @@ import java.util.Set;
 
 import utils.Region;
 
+/**
+ * 还需加上sumOverlapAnalysis
+ * @author Administrator
+ * @version $Id: PrecisionRecall.java, v 0.1 2015年12月18日 下午1:32:31 Administrator Exp $
+ */
 public class PrecisionRecall {
 
     private static final Map<String, Set<Region>> knownCNVMap         = new HashMap<>();
@@ -24,6 +29,10 @@ public class PrecisionRecall {
     private static final Map<String, Set<Region>> cnvnatorPredictMap  = new HashMap<>();
     private static final Map<String, Set<Region>> xhmmPredictMap      = new HashMap<>();
     private static final Map<String, Set<Region>> excavatorPredictMap = new HashMap<>();
+    private static final Set<String>              sampleSet           = new HashSet<>(
+        Arrays.asList("NA10847", "NA12760", "NA11840", "NA12761", "NA12249", "NA18959", "NA12717",
+            "NA18966", "NA12751", "NA18967", "NA18970", "NA19138", "NA18973", "NA19153", "NA18981",
+            "NA19159", "NA18999", "NA19206", "NA19131", "NA19223"));
     private static final Set<String>              excludedSamples     = new HashSet<>(
         Arrays.asList("NA18959", "NA18999", "NA19152", "NA18973", "NA12760", "NA18966", "NA19223")); // 前3个影响结果，后几个还未完成
     private static final Set<String>              analysedChromosomes = new HashSet<>(
@@ -32,7 +41,7 @@ public class PrecisionRecall {
     public static void main(String[] args) {
 
         System.out.println("WES data precision recall analysis:");
-        System.out.println("Recall = correctly detected events / known CNV events");
+        System.out.println("Recall = predicted known CNV events / total known CNV events");
         System.out.println("Precision = unique correctly detected events / total tool CNV events");
         System.out.println("Analysed chromosomes are " + analysedChromosomes);
         System.out.println();
@@ -314,10 +323,7 @@ public class PrecisionRecall {
     public static void outputPrecisionRecall(Float overlapRatio,
                                              Map<String, Set<Region>> toolPredictMap,
                                              String knownCNVFolder) {
-
-        Set<Region> uniquePredictedRegions = new HashSet<>();
-
-        int correctedCNVRegions = 0;
+        int predictedKnownRegions = 0;
         int uniqueCorrectedCNVRegions = 0;
         int knownCNVRegions = 0;
         int toolCNVRegions = 0;
@@ -357,36 +363,91 @@ public class PrecisionRecall {
             }).sum();
         }).sum();
 
-        for (Map.Entry<String, Set<Region>> entry : toolPredictMap.entrySet()) {
-            Set<Region> seqRegions = entry.getValue();
-            Set<Region> knownRegions = knownCNVMap.get(entry.getKey());
+        Map<String, Map<Region, Set<Region>>> beneathMap = new HashMap<>(); // key为sample
+        Map<String, Set<Region>> predictedKnownRegionMap = new HashMap<>(); // key为sample
+        Map<String, Set<Region>> uniquePredictedRegionMap = new HashMap<>(); // key为sample
 
-            int predictCount = 0;
-            for (Region predictRegion : seqRegions) {
+        for (String sample : sampleSet) {
+            if (excludedSamples.contains(sample) || !toolPredictMap.containsKey(sample))
+                continue;
+            Set<Region> predictRegions = toolPredictMap.get(sample);
+            Set<Region> knownRegions = knownCNVMap.get(sample);
+
+            for (Region predictRegion : predictRegions) {
                 for (Region knownRegion : knownRegions) {
                     if (knownRegion.intersact(predictRegion)) {
                         long predictLength = knownRegion.overlap(predictRegion);
                         if ((float) predictLength
                             / (float) knownRegion.getLength() >= overlapRatio) {
-                            predictCount++;
-                            uniquePredictedRegions.add(predictRegion);
+                            if (uniquePredictedRegionMap.containsKey(sample)) {
+                                uniquePredictedRegionMap.get(sample).add(predictRegion);
+                            } else {
+                                Set<Region> predicted = new HashSet<>();
+                                predicted.add(predictRegion);
+                                uniquePredictedRegionMap.put(sample, predicted);
+                            }
+                            if (predictedKnownRegionMap.containsKey(sample)) {
+                                predictedKnownRegionMap.get(sample).add(knownRegion);
+                            } else {
+                                Set<Region> predicted = new HashSet<>();
+                                predicted.add(knownRegion);
+                                predictedKnownRegionMap.put(sample, predicted);
+                            }
+                        }
+                    } else {
+                        if (beneathMap.containsKey(sample)) {
+                            Map<Region, Set<Region>> beneathMapItem = beneathMap.get(sample);
+                            if (beneathMapItem.containsKey(knownRegion)) {
+                                beneathMapItem.get(knownRegion).add(predictRegion);
+                            } else {
+                                Set<Region> beneathSet = new HashSet<>();
+                                beneathSet.add(predictRegion);
+                                beneathMapItem.put(knownRegion, beneathSet);
+                            }
+                        } else {
+                            Set<Region> beneathSet = new HashSet<>();
+                            beneathSet.add(predictRegion);
+                            Map<Region, Set<Region>> beneathMapItem = new HashMap<>();
+                            beneathMapItem.put(knownRegion, beneathSet);
+                            beneathMap.put(sample, beneathMapItem);
                         }
                     }
                 }
             }
-            correctedCNVRegions += predictCount;
         }
-        uniqueCorrectedCNVRegions = uniquePredictedRegions.size();
 
-        System.out.println("Correctly detected CNV events: " + correctedCNVRegions
+        predictedKnownRegions += predictedKnownRegionMap.entrySet().stream().mapToInt(entry -> {
+            return entry.getValue().size();
+        }).sum();
+
+        for (Map.Entry<String, Map<Region, Set<Region>>> entry : beneathMap.entrySet()) {
+            Map<Region, Set<Region>> beneathMapItem = entry.getValue();
+            for (Map.Entry<Region, Set<Region>> beneathEntry : beneathMapItem.entrySet()) {
+                Region knownRegion = beneathEntry.getKey();
+                Set<Region> predictRegions = beneathEntry.getValue();
+                long overlapLength = 0;
+                for (Region predictRegion : predictRegions) {
+                    overlapLength += knownRegion.overlap(predictRegion);
+                }
+                if ((double) overlapLength / knownRegion.getLength() >= overlapRatio) {
+                    predictedKnownRegions++;
+                }
+            }
+        }
+
+        uniqueCorrectedCNVRegions = uniquePredictedRegionMap.entrySet().stream().mapToInt(entry -> {
+            return entry.getValue().size();
+        }).sum();
+
+        System.out.println("Predicted known CNV events: " + predictedKnownRegions
                            + ", Unique correctly detected CNV events: " + uniqueCorrectedCNVRegions
                            + ", Known CNV events: " + knownCNVRegions + ", Tool CNV events: "
                            + toolCNVRegions);
         System.out
             .println(
-                "Recall: " + String.format("%.5f", (double) correctedCNVRegions / knownCNVRegions)
+                "Recall: " + String.format("%.2f", (double) predictedKnownRegions / knownCNVRegions)
                      + ", Precision: "
-                     + String.format("%.5f", (double) uniqueCorrectedCNVRegions / toolCNVRegions));
+                     + String.format("%.2f", (double) uniqueCorrectedCNVRegions / toolCNVRegions));
     }
 
     /**
