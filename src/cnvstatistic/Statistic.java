@@ -34,23 +34,23 @@ public class Statistic {
     public static void main(String[] args) {
         readSimulatedRegions("/Users/racing/Lab/(2015-09-22)CNV/simulatedRegions.txt");
         //        System.out.println(list);
-        statisticCNVer("/Users/racing/Lab/(2015-09-22)CNV/CNVer");
-        statisticCNVnator("/Users/racing/Lab/(2015-09-22)CNV/CNVnator/placenta_BAC_predict.txt");
-        statisticConifer("/Users/racing/Lab/(2015-09-22)CNV/Conifer/calls.txt");
+//        statisticCNVer("/Users/racing/Lab/(2015-09-22)CNV/CNVer");
+//        statisticCNVnator("/Users/racing/Lab/(2015-09-22)CNV/CNVnator/placenta_BAC_predict.txt");
+//        statisticConifer("/Users/racing/Lab/(2015-09-22)CNV/Conifer/calls.txt");
         statisticSeqcnv("/Users/racing/Lab/(2015-09-22)CNV/SeqCNV/CNV_report.txt");
-
-        System.out
-            .println("CNVer & CNVnator : " + intersect(cnverRegionList, cnvnatorRegionList).size());
-        System.out
-            .println("CNVer & CoNIFER : " + intersect(cnverRegionList, coniferRegionList).size());
-        System.out
-            .println("CNVer & SeqCNV : " + intersect(cnverRegionList, seqcnvRegionList).size());
-        System.out.println(
-            "CoNIFER & CNVnator : " + intersect(coniferRegionList, cnvnatorRegionList).size());
-        System.out
-            .println("CoNIFER & SeqCNV : " + intersect(coniferRegionList, seqcnvRegionList).size());
-        System.out.println(
-            "CNVnator & SeqCNV : " + intersect(cnvnatorRegionList, seqcnvRegionList).size());
+//
+//        System.out
+//            .println("CNVer & CNVnator : " + intersect(cnverRegionList, cnvnatorRegionList).size());
+//        System.out
+//            .println("CNVer & CoNIFER : " + intersect(cnverRegionList, coniferRegionList).size());
+//        System.out
+//            .println("CNVer & SeqCNV : " + intersect(cnverRegionList, seqcnvRegionList).size());
+//        System.out.println(
+//            "CoNIFER & CNVnator : " + intersect(coniferRegionList, cnvnatorRegionList).size());
+//        System.out
+//            .println("CoNIFER & SeqCNV : " + intersect(coniferRegionList, seqcnvRegionList).size());
+//        System.out.println(
+//            "CNVnator & SeqCNV : " + intersect(cnvnatorRegionList, seqcnvRegionList).size());
     }
 
     public static boolean judgeInSimulatedRegions(Region region) {
