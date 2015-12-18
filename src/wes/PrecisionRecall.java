@@ -25,19 +25,24 @@ public class PrecisionRecall {
     private static final Map<String, Set<Region>> xhmmPredictMap      = new HashMap<>();
     private static final Map<String, Set<Region>> excavatorPredictMap = new HashMap<>();
     private static final Set<String>              excludedSamples     = new HashSet<>(
-        Arrays.asList("NA18959", "NA18999", "NA19152"));
+        Arrays.asList("NA18959", "NA18999", "NA19152", "NA18973", "NA12760", "NA18966", "NA19223")); // 前3个影响结果，后几个还未完成
+    private static final Set<String>              analysedChromosomes = new HashSet<>(
+        Arrays.asList("chr1"));
 
     public static void main(String[] args) {
 
         System.out.println("WES data precision recall analysis:");
         System.out.println("Recall = correctly detected events / known CNV events");
         System.out.println("Precision = unique correctly detected events / total tool CNV events");
+        System.out.println("Analysed chromosomes are " + analysedChromosomes);
         System.out.println();
 
         float[] overlapRatios = { 0.1f };
         for (float overlapRatio : overlapRatios) {
-            seqcnv(overlapRatio, "C:\\Users\\Administrator\\Desktop\\chr1_chr4_result\\SeqCNV",
-                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv");
+            //            seqcnv(overlapRatio, "C:\\Users\\Administrator\\Desktop\\chr1_chr4_result\\SeqCNV",
+            //                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // chr1_chr4
+            seqcnv(overlapRatio, "C:\\Users\\Administrator\\Desktop\\seqcnv_chr1",
+                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // only chr1
             conifer(overlapRatio,
                 "C:\\Users\\Administrator\\Desktop\\chr1_chr4_result\\CoNIFER\\CoNIFER_chr1_chr4.tsv",
                 "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv");
@@ -93,12 +98,15 @@ public class PrecisionRecall {
             List<String> seqcnvResultLines = readLines(resultFilePath);
             seqcnvResultLines.stream().forEach(line -> {
                 String[] feature = line.split("\\s+");
-                seqcnvRegions
-                    .add(new Region(feature[0].length() < 3 ? "chr" + feature[0] : feature[0],
-                        feature[1], feature[2]));
+                feature[0] = feature[0].length() < 3 ? "chr" + feature[0] : feature[0];
+                if (analysedChromosomes.contains(feature[0]))
+                    seqcnvRegions.add(new Region(feature[0], feature[1], feature[2]));
             });
             seqcnvPredictMap.put(sample, seqcnvRegions);
         }
+        //        for (Map.Entry<String, Set<Region>> entry : seqcnvPredictMap.entrySet()) {
+        //            System.out.println(entry.getKey() + ":" + entry.getValue().size());
+        //        }
         outputPrecisionRecall(overlapRatio, seqcnvPredictMap, knownCNVFolder);
         System.out.println();
     }
@@ -130,8 +138,10 @@ public class PrecisionRecall {
             String coniferSample = feature[0];
             if (excludedSamples.contains(coniferSample))
                 return; // 如果在排除样本里
-            Region region = new Region(feature[1].length() < 3 ? "chr" + feature[1] : feature[1],
-                feature[2], feature[3]);
+            feature[1] = feature[1].length() < 3 ? "chr" + feature[1] : feature[1];
+            if (!analysedChromosomes.contains(feature[1]))
+                return;
+            Region region = new Region(feature[1], feature[2], feature[3]);
             if (coniferPredictMap.containsKey(coniferSample)) {
                 coniferPredictMap.get(coniferSample).add(region);
             } else {
@@ -184,9 +194,9 @@ public class PrecisionRecall {
             Set<Region> cnvnatorRegions = new HashSet<>();
             cnvnatorResultLines.stream().forEach(line -> {
                 String[] feature = line.split("\\s+")[1].replace(":", "-").split("-");
-                cnvnatorRegions
-                    .add(new Region(feature[0].length() < 3 ? "chr" + feature[0] : feature[0],
-                        feature[1], feature[2]));
+                feature[0] = feature[0].length() < 3 ? "chr" + feature[0] : feature[0];
+                if (analysedChromosomes.contains(feature[0]))
+                    cnvnatorRegions.add(new Region(feature[0], feature[1], feature[2]));
             });
             cnvnatorPredictMap.put(sample, cnvnatorRegions);
         }
@@ -224,9 +234,11 @@ public class PrecisionRecall {
             if (excludedSamples.contains(sample))
                 return; // 如果在排除样本里
             String[] regionFeature = feature[2].replace(":", "-").split("-");
-            Region region = new Region(
-                regionFeature[0].length() < 3 ? "chr" + regionFeature[0] : regionFeature[0],
-                regionFeature[1], regionFeature[2]);
+            regionFeature[0] = regionFeature[0].length() < 3 ? "chr" + regionFeature[0]
+                : regionFeature[0];
+            if (!analysedChromosomes.contains(regionFeature[0]))
+                return;
+            Region region = new Region(regionFeature[0], regionFeature[1], regionFeature[2]);
             if (xhmmPredictMap.containsKey(sample)) {
                 xhmmPredictMap.get(sample).add(region);
             } else {
@@ -282,9 +294,9 @@ public class PrecisionRecall {
             Set<Region> excavatorRegions = new HashSet<>();
             excavatorResultLines.stream().forEach(line -> {
                 String[] feature = line.split("\\s+");
-                excavatorRegions
-                    .add(new Region(feature[0].length() < 3 ? "chr" + feature[0] : feature[0],
-                        feature[1], feature[2]));
+                feature[0] = feature[0].length() < 3 ? "chr" + feature[0] : feature[0];
+                if (analysedChromosomes.contains(feature[0]))
+                    excavatorRegions.add(new Region(feature[0], feature[1], feature[2]));
             });
             excavatorPredictMap.put(sample, excavatorRegions);
         }
@@ -372,9 +384,9 @@ public class PrecisionRecall {
                            + toolCNVRegions);
         System.out
             .println(
-                "Recall: " + String.format("%.2f", (double) correctedCNVRegions / knownCNVRegions)
+                "Recall: " + String.format("%.5f", (double) correctedCNVRegions / knownCNVRegions)
                      + ", Precision: "
-                     + String.format("%.2f", (double) uniqueCorrectedCNVRegions / toolCNVRegions));
+                     + String.format("%.5f", (double) uniqueCorrectedCNVRegions / toolCNVRegions));
     }
 
     /**
@@ -386,7 +398,7 @@ public class PrecisionRecall {
      * @param overlapRatio
      * @return num of the overlap regions exceed the overlapRatio
      */
-    private static int sumOverlap(Map<Region, Set<Region>> beneathRatioMap, float overlapRatio) {
+    public static int sumOverlap(Map<Region, Set<Region>> beneathRatioMap, float overlapRatio) {
         int sum = 0;
         for (Map.Entry<Region, Set<Region>> entry : beneathRatioMap.entrySet()) {
             Region knownRegion = entry.getKey();
@@ -411,8 +423,9 @@ public class PrecisionRecall {
         knownCNVLines.remove(0);
         knownCNVLines.stream().forEach(line -> {
             String[] feature = line.split("\\s+");
-            knownCNVRegions.add(new Region(
-                feature[0].length() < 3 ? "chr" + feature[0] : feature[0], feature[1], feature[2]));
+            feature[0] = feature[0].length() < 3 ? "chr" + feature[0] : feature[0];
+            if (analysedChromosomes.contains(feature[0]))
+                knownCNVRegions.add(new Region(feature[0], feature[1], feature[2]));
         });
         knownCNVMap.put(sample, knownCNVRegions);
     }
