@@ -6,8 +6,10 @@ import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import utils.Region;
@@ -29,7 +31,7 @@ public class PrecisionRecall {
     public static void main(String[] args) {
 
         System.out.println("placenta data precision recall analysis:");
-        System.out.println("Recall = correctly detected events / known CNV events");
+        System.out.println("Recall = predicted known CNV events / total known CNV events");
         System.out.println("Precision = unique correctly detected events / total tool CNV events");
         System.out.println();
 
@@ -220,7 +222,7 @@ public class PrecisionRecall {
 
         Set<Region> uniquePredictedRegions = new HashSet<>();
 
-        int correctedCNVRegions = 0;
+        int predictedKnownRegions = 0;
         int uniqueCorrectedCNVRegions = 0;
         int knownRegions = 0;
         int toolCNVRegions = 0;
@@ -230,28 +232,79 @@ public class PrecisionRecall {
         toolCNVRegions += toolPredictRegions.size();
         knownRegions += knownCNVRegions.size();
 
+        Map<Region, Set<Region>> beneathMap = new HashMap<>(); // overlap没有超过overlapRatio的那些regions，key为knownRegion，value为predictRegions
+        Set<Region> predictedKnownRegionSet = new HashSet<>(); // knownRegions中，被predict出来的那些region
+
         for (Region predictRegion : toolPredictRegions) {
             for (Region knownRegion : knownCNVRegions) {
                 if (knownRegion.intersact(predictRegion)) {
                     long predictLength = knownRegion.overlap(predictRegion);
                     if ((float) predictLength / (float) knownRegion.getLength() >= overlapRatio) {
-                        correctedCNVRegions++;
                         uniquePredictedRegions.add(predictRegion);
+                        predictedKnownRegionSet.add(knownRegion);
+                    } else {
+                        if (beneathMap.containsKey(knownRegion)) {
+                            beneathMap.get(knownRegion).add(predictRegion);
+                        } else {
+                            Set<Region> regions = new HashSet<>();
+                            regions.add(predictRegion);
+                            beneathMap.put(knownRegion, regions);
+                        }
                     }
                 }
             }
         }
+
+        for (Map.Entry<Region, Set<Region>> entry : beneathMap.entrySet()) {
+            Region knownRegion = entry.getKey();
+            Set<Region> predictRegions = entry.getValue();
+            long overlapLength = 0;
+            for (Region predictRegion : predictRegions) {
+                overlapLength += knownRegion.overlap(predictRegion);
+            }
+            if ((double) overlapLength / knownRegion.getLength() >= overlapRatio) {
+                predictedKnownRegionSet.add(knownRegion);
+            }
+        }
+        predictedKnownRegions = predictedKnownRegionSet.size();
+
         uniqueCorrectedCNVRegions = uniquePredictedRegions.size();
 
-        System.out.println("Correctly detected CNV events: " + correctedCNVRegions
+        System.out.println("Correctly detected CNV events: " + predictedKnownRegions
                            + ", Unique correctly detected CNV events: " + uniqueCorrectedCNVRegions
                            + ", Known CNV events: " + knownRegions + ", Tool CNV events: "
                            + toolCNVRegions);
         System.out
-            .println("Recall: " + String.format("%.2f", (double) correctedCNVRegions / knownRegions)
+            .println(
+                "Recall: " + String.format("%.2f", (double) predictedKnownRegions / knownRegions)
                      + ", Precision: "
                      + String.format("%.2f", (double) uniqueCorrectedCNVRegions / toolCNVRegions));
         System.out.println();
+    }
+
+    /**
+     * sum the overlap between the knownCNVRegion and predictCNVRegion, return the num of
+     * knownCNVRegions which was overlapped by predictCNVRegions exceed the overlapRatio.
+     * 
+     * @param beneathRatioMap key is knownCNVRegion, value is a set of predictCNVRegions which
+     *        overlap with the key but beneath the overlapRatio.
+     * @param overlapRatio
+     * @return num of the overlap regions exceed the overlapRatio
+     */
+    public static int sumOverlap(Map<Region, Set<Region>> beneathRatioMap, float overlapRatio) {
+        int sum = 0;
+        for (Map.Entry<Region, Set<Region>> entry : beneathRatioMap.entrySet()) {
+            Region knownRegion = entry.getKey();
+            Set<Region> predictRegions = entry.getValue();
+            long overlapLength = 0;
+            for (Region predictRegion : predictRegions) {
+                overlapLength += knownRegion.overlap(predictRegion);
+            }
+            if ((double) overlapLength / knownRegion.getLength() >= overlapRatio) {
+                sum++;
+            }
+        }
+        return sum;
     }
 
     private static void readKnownCNVRegions(String knownCNVFilePath) {
