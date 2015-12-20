@@ -30,15 +30,14 @@ public class PrecisionRecall {
 
     public static void main(String[] args) {
 
-        System.out.println("placenta data precision recall analysis:");
+        System.out.println("Placenta data precision recall analysis:");
         System.out.println("Recall = predicted known CNV events / total known CNV events");
         System.out.println("Precision = unique correctly detected events / total tool CNV events");
         System.out.println();
 
         float[] overlapRatios = { 0.1f };
         for (float overlapRatio : overlapRatios) {
-            seqcnv(overlapRatio,
-                "/Users/racing/Downloads/placenta_latest/SeqCNV/placenta/report/CNV_report.txt",
+            seqcnv(overlapRatio, "/Users/racing/Desktop/placenta3.5/report/CNV_report.txt",
                 "/Users/racing/Downloads/placenta_latest/simulatedRegions.txt");
             conifer(overlapRatio, "/Users/racing/Downloads/placenta_latest/CoNIFER/svd_5.txt",
                 "/Users/racing/Downloads/placenta_latest/simulatedRegions.txt");

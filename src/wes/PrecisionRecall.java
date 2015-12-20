@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import utils.Pair;
 import utils.Region;
 
 /**
@@ -367,18 +368,26 @@ public class PrecisionRecall {
         Map<String, Set<Region>> predictedKnownRegionMap = new HashMap<>(); // key为sample
         Map<String, Set<Region>> uniquePredictedRegionMap = new HashMap<>(); // key为sample
 
+        Map<String, Pair<Float, Float>> preRecMap = new HashMap<>(); // key为sample，value为该sample对应的recall和precision。
+
         for (String sample : sampleSet) {
             if (excludedSamples.contains(sample) || !toolPredictMap.containsKey(sample))
                 continue;
-            Set<Region> predictRegions = toolPredictMap.get(sample);
-            Set<Region> knownRegions = knownCNVMap.get(sample);
+            Set<Region> sampleToolCNVRegions = toolPredictMap.get(sample);
+            Set<Region> sampleKnownCNVRegions = knownCNVMap.get(sample);
+            Set<Region> sampleCorrectedCNVRegions = new HashSet<>();
+            Set<Region> samplePredictedKnownRegions = new HashSet<>();
 
-            for (Region predictRegion : predictRegions) {
-                for (Region knownRegion : knownRegions) {
+            for (Region predictRegion : sampleToolCNVRegions) {
+                for (Region knownRegion : sampleKnownCNVRegions) {
                     if (knownRegion.intersact(predictRegion)) {
                         long predictLength = knownRegion.overlap(predictRegion);
                         if ((float) predictLength
                             / (float) knownRegion.getLength() >= overlapRatio) {
+
+                            samplePredictedKnownRegions.add(knownRegion);
+                            sampleCorrectedCNVRegions.add(predictRegion);
+
                             if (uniquePredictedRegionMap.containsKey(sample)) {
                                 uniquePredictedRegionMap.get(sample).add(predictRegion);
                             } else {
@@ -414,6 +423,28 @@ public class PrecisionRecall {
                     }
                 }
             }
+
+            int extraPredictedKnown = 0;
+            Map<Region, Set<Region>> sampleBeneathMap = beneathMap.get(sample);
+            for (Map.Entry<Region, Set<Region>> beneathEntry : sampleBeneathMap.entrySet()) {
+                Region knownRegion = beneathEntry.getKey();
+                Set<Region> predictRegions = beneathEntry.getValue();
+                long overlapLength = 0;
+                for (Region predictRegion : predictRegions) {
+                    overlapLength += knownRegion.overlap(predictRegion);
+                }
+                if ((double) overlapLength / knownRegion.getLength() >= overlapRatio) {
+                    extraPredictedKnown++;
+                }
+            }
+
+            float sampleRecall = (float) (sampleKnownCNVRegions.size() + extraPredictedKnown)
+                                 / sampleKnownCNVRegions.size();
+            float samplePrecision = (float) sampleCorrectedCNVRegions.size()
+                                    / sampleToolCNVRegions.size();
+
+            preRecMap.put(sample, new Pair<>(sampleRecall, samplePrecision));
+
         }
 
         predictedKnownRegions += predictedKnownRegionMap.entrySet().stream().mapToInt(entry -> {
@@ -448,6 +479,14 @@ public class PrecisionRecall {
                 "Recall: " + String.format("%.2f", (double) predictedKnownRegions / knownCNVRegions)
                      + ", Precision: "
                      + String.format("%.2f", (double) uniqueCorrectedCNVRegions / toolCNVRegions));
+        double avgRecall = preRecMap.entrySet().stream().mapToDouble(entry -> {
+            return entry.getValue().getFirst();
+        }).sum();
+        double avgPrecision = preRecMap.entrySet().stream().mapToDouble(entry -> {
+            return entry.getValue().getSecond();
+        }).sum();
+        System.out.println("Recall: " + String.format("%.2f", avgRecall) + ", Precision: "
+                           + String.format("%.2f", avgPrecision));
     }
 
     /**
