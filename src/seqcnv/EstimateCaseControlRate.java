@@ -99,7 +99,7 @@ public class EstimateCaseControlRate {
                 Region region = entry.getKey();
                 String trueOrFalsePositive = "FP";
                 for (Region item : simulatedRegionList) {
-                    if (region.intersact(item)) {
+                    if (region.isOverlapped(item)) {
                         trueOrFalsePositive = "TP";
                         break;
                     }
@@ -161,7 +161,7 @@ public class EstimateCaseControlRate {
                 Region region = entry.getKey();
                 String trueOrFalsePositive = "FP";
                 for (Region item : simulatedRegionList) {
-                    if (region.intersact(item)) {
+                    if (region.isOverlapped(item)) {
                         trueOrFalsePositive = "TP";
                         break;
                     }

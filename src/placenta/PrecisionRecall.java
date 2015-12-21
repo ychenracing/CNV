@@ -38,7 +38,7 @@ public class PrecisionRecall {
         float[] overlapRatios = { 0.001f, 0.01f, 0.1f, 0.5f };
         for (float overlapRatio : overlapRatios) {
             // mac
-            /*seqcnv(overlapRatio, "/Users/racing/Desktop/placenta3.5/report/CNV_report.txt",
+            seqcnv(overlapRatio, "/Users/racing/Desktop/placenta3.5/report/CNV_report.txt",
                 "/Users/racing/Downloads/placenta_latest/simulatedRegions.txt");
             conifer(overlapRatio, "/Users/racing/Downloads/placenta_latest/CoNIFER/svd_5.txt",
                 "/Users/racing/Downloads/placenta_latest/simulatedRegions.txt");
@@ -48,22 +48,22 @@ public class PrecisionRecall {
             cnver(overlapRatio, "/Users/racing/Downloads/placenta_latest/CNVer",
                 "/Users/racing/Downloads/placenta_latest/simulatedRegions.txt");
             xhmm(overlapRatio, "/Users/racing/Downloads/placenta_latest/XHMM/DATA.xcnv",
-                "/Users/racing/Downloads/placenta_latest/simulatedRegions.txt");*/
+                "/Users/racing/Downloads/placenta_latest/simulatedRegions.txt");
             // windows
-            seqcnv(overlapRatio,
-                "C:\\Users\\Administrator\\Desktop\\placenta_parameter\\placenta3.5_CNV_report.txt",
-                "D:\\placenta_latest\\simulatedRegions.txt");
+            /*seqcnv(overlapRatio,
+            "C:\\Users\\Administrator\\Desktop\\placenta_parameter\\placenta3.5_CNV_report.txt",
+            "D:\\placenta_latest\\simulatedRegions.txt");
             conifer(overlapRatio, "D:\\placenta_latest\\CoNIFER\\svd_5.txt",
-                "D:\\placenta_latest\\simulatedRegions.txt");
+            "D:\\placenta_latest\\simulatedRegions.txt");
             cnvnator(overlapRatio, "D:\\placenta_latest\\CNVnator\\placenta_BAC_predict.txt",
-                "D:\\placenta_latest\\simulatedRegions.txt");
+            "D:\\placenta_latest\\simulatedRegions.txt");
             cnver(overlapRatio, "D:\\placenta_latest\\CNVer",
-                "D:\\placenta_latest\\simulatedRegions.txt");
+            "D:\\placenta_latest\\simulatedRegions.txt");
             xhmm(overlapRatio, "D:\\placenta_latest\\XHMM\\DATA.xcnv",
-                "D:\\placenta_latest\\simulatedRegions.txt");
+            "D:\\placenta_latest\\simulatedRegions.txt");
             System.out.println();
             System.out.println();
-            System.out.println();
+            System.out.println();*/
         }
     }
 
@@ -252,9 +252,11 @@ public class PrecisionRecall {
 
         for (Region predictRegion : toolPredictRegions) {
             for (Region knownRegion : knownCNVRegions) {
-                if (knownRegion.intersact(predictRegion)) {
-                    long predictLength = knownRegion.overlap(predictRegion);
-                    if ((float) predictLength / (float) knownRegion.getLength() >= overlapRatio) {
+                if (knownRegion.isOverlapped(predictRegion)) {
+                    long predictLength = knownRegion.getOverlapLength(predictRegion);
+                    //                    if ((float) predictLength / (float) knownRegion.getLength() >= overlapRatio) {
+                    if ((float) predictLength
+                        / (float) predictRegion.getOverlapBaseLength(knownRegion) >= overlapRatio) {
                         uniquePredictedRegions.add(predictRegion);
                         predictedKnownRegionSet.add(knownRegion);
                     } else {
@@ -275,7 +277,7 @@ public class PrecisionRecall {
             Set<Region> predictRegions = entry.getValue();
             long overlapLength = 0;
             for (Region predictRegion : predictRegions) {
-                overlapLength += knownRegion.overlap(predictRegion);
+                overlapLength += knownRegion.getOverlapLength(predictRegion);
             }
             if ((double) overlapLength / knownRegion.getLength() >= overlapRatio) {
                 predictedKnownRegionSet.add(knownRegion);
@@ -313,7 +315,7 @@ public class PrecisionRecall {
             Set<Region> predictRegions = entry.getValue();
             long overlapLength = 0;
             for (Region predictRegion : predictRegions) {
-                overlapLength += knownRegion.overlap(predictRegion);
+                overlapLength += knownRegion.getOverlapLength(predictRegion);
             }
             if ((double) overlapLength / knownRegion.getLength() >= overlapRatio) {
                 sum++;

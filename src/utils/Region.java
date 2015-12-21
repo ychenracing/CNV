@@ -50,7 +50,7 @@ public class Region implements Comparable<Region> {
      * @param other
      * @return 
      */
-    public boolean intersact(Region other) {
+    public boolean isOverlapped(Region other) {
         if (!this.chr.equals(other.chr))
             return false;
         if (this.start <= other.start && this.end >= other.end
@@ -66,8 +66,8 @@ public class Region implements Comparable<Region> {
      * @param other
      * @return overlapLength
      */
-    public long overlap(Region other) {
-        if (!this.intersact(other))
+    public long getOverlapLength(Region other) {
+        if (!this.isOverlapped(other))
             return 0;
         long overlapLength;
         if (other.getStart() >= this.getStart()) {
@@ -80,6 +80,27 @@ public class Region implements Comparable<Region> {
             overlapLength = other.getEnd() - this.getStart();
         }
         return overlapLength;
+    }
+
+    /**
+     * return sum of the base length of two regions overlapped.
+     * @param other
+     * @return sum of the base length, 0 if the two regions not overlapped.
+     */
+    public long getOverlapBaseLength(Region other) {
+        if (!this.isOverlapped(other))
+            return 0;
+        long sumBaseLength;
+        if (other.getStart() >= this.getStart()) {
+            if (other.getEnd() >= this.getEnd()) {
+                sumBaseLength = other.getEnd() - this.getStart();
+            } else {
+                sumBaseLength = this.getEnd() - this.getStart();
+            }
+        } else {
+            sumBaseLength = this.getEnd() - other.getStart();
+        }
+        return sumBaseLength;
     }
 
     @Override

@@ -53,7 +53,7 @@ public class CopyTargetNotation {
                     appendString = "\t" + srcFeature[3] + "\t" + srcFeature[4] + "\t"
                                    + srcFeature[5];
                     Region srcRegion = new Region(srcFeature[0], srcFeature[1], srcFeature[2]);
-                    if (!targetRegion.intersact(srcRegion)) {
+                    if (!targetRegion.isOverlapped(srcRegion)) {
                         String writeString = targetRegion + lastAppendString + "\n";
                         lastAppendString = appendString;
                         bw.write(writeString);

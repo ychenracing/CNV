@@ -117,7 +117,7 @@ public class Statistic {
         for (Region region : cnverRegionList) {
             Region ref = null;
             for (Map.Entry<Region, Integer> entry : cnverRegionMap.entrySet()) {
-                if (entry.getKey().intersact(region)) {
+                if (entry.getKey().isOverlapped(region)) {
                     ref = entry.getKey();
                     break;
                 }
@@ -166,7 +166,7 @@ public class Statistic {
         for (Region region : cnvnatorRegionList) {
             Region ref = null;
             for (Map.Entry<Region, Integer> entry : cnvnatorRegionMap.entrySet()) {
-                if (entry.getKey().intersact(region)) {
+                if (entry.getKey().isOverlapped(region)) {
                     ref = entry.getKey();
                     break;
                 }
@@ -215,7 +215,7 @@ public class Statistic {
         for (Region region : coniferRegionList) {
             Region ref = null;
             for (Map.Entry<Region, Integer> entry : coniferRegionMap.entrySet()) {
-                if (entry.getKey().intersact(region)) {
+                if (entry.getKey().isOverlapped(region)) {
                     ref = entry.getKey();
                     break;
                 }
@@ -264,7 +264,7 @@ public class Statistic {
         for (Region region : seqcnvRegionList) {
             Region ref = null;
             for (Map.Entry<Region, Integer> entry : seqcnvRegionMap.entrySet()) {
-                if (entry.getKey().intersact(region)) {
+                if (entry.getKey().isOverlapped(region)) {
                     ref = entry.getKey();
                     break;
                 }
@@ -289,7 +289,7 @@ public class Statistic {
                 int com = regionItem1.getChr().compareTo(regionItem2.getChr());
                 if (com != 0)
                     continue;
-                if (regionItem1.intersact(regionItem2))
+                if (regionItem1.isOverlapped(regionItem2))
                     result.add(regionItem1);
             }
         }

@@ -387,11 +387,14 @@ public class PrecisionRecall {
 
             for (Region predictRegion : sampleToolCNVRegions) {
                 for (Region knownRegion : sampleKnownCNVRegions) {
-                    if (knownRegion.intersact(predictRegion)) {
-                        long predictLength = knownRegion.overlap(predictRegion);
-                        if ((float) predictLength
-                            / (float) knownRegion.getLength() >= overlapRatio) {
+                    if (knownRegion.isOverlapped(predictRegion)) {
+                        long predictLength = knownRegion.getOverlapLength(predictRegion);
 
+                        //                        if ((float) predictLength
+                        //                            / (float) knownRegion.getLength() >= overlapRatio) {
+
+                        if ((float) predictLength / (float) predictRegion
+                            .getOverlapBaseLength(knownRegion) >= overlapRatio) {
                             samplePredictedKnownRegions.add(knownRegion);
                             sampleCorrectedCNVRegions.add(predictRegion);
 
@@ -439,7 +442,7 @@ public class PrecisionRecall {
                     Set<Region> predictRegions = beneathEntry.getValue();
                     long overlapLength = 0;
                     for (Region predictRegion : predictRegions) {
-                        overlapLength += knownRegion.overlap(predictRegion);
+                        overlapLength += knownRegion.getOverlapLength(predictRegion);
                     }
                     if ((double) overlapLength / knownRegion.getLength() >= overlapRatio) {
                         extraPredictedKnown++;
@@ -457,18 +460,24 @@ public class PrecisionRecall {
 
         }
 
-        predictedKnownRegions += predictedKnownRegionMap.entrySet().stream().mapToInt(entry -> {
+        predictedKnownRegions += predictedKnownRegionMap.entrySet().stream().mapToInt(entry ->
+
+        {
             return entry.getValue().size();
         }).sum();
 
-        for (Map.Entry<String, Map<Region, Set<Region>>> entry : beneathMap.entrySet()) {
+        for (
+
+        Map.Entry<String, Map<Region, Set<Region>>> entry : beneathMap.entrySet())
+
+        {
             Map<Region, Set<Region>> beneathMapItem = entry.getValue();
             for (Map.Entry<Region, Set<Region>> beneathEntry : beneathMapItem.entrySet()) {
                 Region knownRegion = beneathEntry.getKey();
                 Set<Region> predictRegions = beneathEntry.getValue();
                 long overlapLength = 0;
                 for (Region predictRegion : predictRegions) {
-                    overlapLength += knownRegion.overlap(predictRegion);
+                    overlapLength += knownRegion.getOverlapLength(predictRegion);
                 }
                 if ((double) overlapLength / knownRegion.getLength() >= overlapRatio) {
                     predictedKnownRegions++;
@@ -476,7 +485,9 @@ public class PrecisionRecall {
             }
         }
 
-        uniqueCorrectedCNVRegions = uniquePredictedRegionMap.entrySet().stream().mapToInt(entry -> {
+        uniqueCorrectedCNVRegions = uniquePredictedRegionMap.entrySet().stream().mapToInt(entry ->
+
+        {
             return entry.getValue().size();
         }).sum();
 
@@ -491,6 +502,7 @@ public class PrecisionRecall {
                      + String.format("%.3f", (double) uniqueCorrectedCNVRegions / toolCNVRegions));
         sampleSet.addAll(excludedSamples);
         sampleSet.removeAll(excludedSamples);
+
         int analysedSampleCount = sampleSet.size();
         double avgRecall = preRecMap.entrySet().stream().mapToDouble(entry -> {
             return entry.getValue().getFirst();
@@ -500,6 +512,7 @@ public class PrecisionRecall {
         }).sum() / analysedSampleCount;
         System.out.println("Recall: " + String.format("%.3f", avgRecall) + ", Precision: "
                            + String.format("%.3f", avgPrecision) + " (average)");
+
     }
 
     /**
@@ -518,7 +531,7 @@ public class PrecisionRecall {
             Set<Region> predictRegions = entry.getValue();
             long overlapLength = 0;
             for (Region predictRegion : predictRegions) {
-                overlapLength += knownRegion.overlap(predictRegion);
+                overlapLength += knownRegion.getOverlapLength(predictRegion);
             }
             if ((double) overlapLength / knownRegion.getLength() >= overlapRatio) {
                 sum++;

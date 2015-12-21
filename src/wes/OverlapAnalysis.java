@@ -93,8 +93,8 @@ public class OverlapAnalysis {
 
                 //                boolean exceedRatio = false;
                 for (Region knownRegion : knownRegions) {
-                    if (knownRegion.intersact(predictRegion)) {
-                        long predictLength = knownRegion.overlap(predictRegion);
+                    if (knownRegion.isOverlapped(predictRegion)) {
+                        long predictLength = knownRegion.getOverlapLength(predictRegion);
                         if ((float) predictLength
                             / (float) knownRegion.getLength() >= overlapRatio) {
                             predictCount++;
@@ -181,8 +181,8 @@ public class OverlapAnalysis {
                         && !predictRegion.getChr().equals("chr4")) {
                         continue; // 只考虑chr1和chr4
                     }
-                    if (knownRegion.intersact(predictRegion)) {
-                        long predictLength = knownRegion.overlap(predictRegion);
+                    if (knownRegion.isOverlapped(predictRegion)) {
+                        long predictLength = knownRegion.getOverlapLength(predictRegion);
                         if ((double) predictLength
                             / (double) knownRegion.getLength() >= overlapRatio) {
                             predictCount++;
@@ -262,8 +262,8 @@ public class OverlapAnalysis {
                         && !predictRegion.getChr().equals("chr4")) {
                         continue; // 只考虑chr1和chr4
                     }
-                    if (knownRegion.intersact(predictRegion)) {
-                        long predictLength = knownRegion.overlap(predictRegion);
+                    if (knownRegion.isOverlapped(predictRegion)) {
+                        long predictLength = knownRegion.getOverlapLength(predictRegion);
                         if ((double) predictLength
                             / (double) knownRegion.getLength() >= overlapRatio) {
                             predictCount++;
@@ -350,8 +350,8 @@ public class OverlapAnalysis {
                         && !predictRegion.getChr().equals("chr4")) {
                         continue; // 只考虑chr1和chr4
                     }
-                    if (knownRegion.intersact(predictRegion)) {
-                        long predictLength = knownRegion.overlap(predictRegion);
+                    if (knownRegion.isOverlapped(predictRegion)) {
+                        long predictLength = knownRegion.getOverlapLength(predictRegion);
                         if ((double) predictLength
                             / (double) knownRegion.getLength() >= overlapRatio) {
                             predictCount++;
@@ -398,7 +398,7 @@ public class OverlapAnalysis {
             Set<Region> predictRegions = entry.getValue();
             long overlapLength = 0;
             for (Region predictRegion : predictRegions) {
-                overlapLength += knownRegion.overlap(predictRegion);
+                overlapLength += knownRegion.getOverlapLength(predictRegion);
             }
             if ((double) overlapLength / knownRegion.getLength() >= overlapRatio) {
                 sum++;

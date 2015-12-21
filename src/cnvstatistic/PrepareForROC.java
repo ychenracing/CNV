@@ -119,7 +119,7 @@ public class PrepareForROC {
                 this.seqcnvRegions.add(predictedRegion);
                 boolean isIntersacted = false;
                 for (Region simulatedRegion : simulatedRegions) {
-                    if (predictedRegion.intersact(simulatedRegion)) {
+                    if (predictedRegion.isOverlapped(simulatedRegion)) {
                         isIntersacted = true;
                         // predictedRegion完全包含在simulatedRegion中
                         if (predictedRegion.getStart() >= simulatedRegion.getStart()
@@ -216,7 +216,7 @@ public class PrepareForROC {
                     this.coniferRegions.add(predictedRegion);
                     boolean isIntersacted = false;
                     for (Region simulatedRegion : simulatedRegions) {
-                        if (predictedRegion.intersact(simulatedRegion)) {
+                        if (predictedRegion.isOverlapped(simulatedRegion)) {
                             isIntersacted = true;
                             // predictedRegion完全包含在simulatedRegion中
                             if (predictedRegion.getStart() >= simulatedRegion.getStart()
@@ -297,7 +297,7 @@ public class PrepareForROC {
                 this.cnvnatorRegions.add(predictedRegion);
                 boolean isIntersacted = false;
                 for (Region simulatedRegion : simulatedRegions) {
-                    if (predictedRegion.intersact(simulatedRegion)) {
+                    if (predictedRegion.isOverlapped(simulatedRegion)) {
                         isIntersacted = true;
                         // predictedRegion完全包含在simulatedRegion中
                         if (predictedRegion.getStart() >= simulatedRegion.getStart()
@@ -381,7 +381,7 @@ public class PrepareForROC {
                     this.cnverRegions.add(predictedRegion);
                     boolean isIntersacted = false;
                     for (Region simulatedRegion : simulatedRegions) {
-                        if (predictedRegion.intersact(simulatedRegion)) {
+                        if (predictedRegion.isOverlapped(simulatedRegion)) {
                             isIntersacted = true;
                             // predictedRegion完全包含在simulatedRegion中
                             if (predictedRegion.getStart() >= simulatedRegion.getStart()
