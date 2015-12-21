@@ -35,9 +35,10 @@ public class PrecisionRecall {
         System.out.println("Precision = unique correctly detected events / total tool CNV events");
         System.out.println();
 
-        float[] overlapRatios = { 0.1f };
+        float[] overlapRatios = { 0.001f, 0.01f, 0.1f, 0.5f };
         for (float overlapRatio : overlapRatios) {
-            seqcnv(overlapRatio, "/Users/racing/Desktop/placenta3.5/report/CNV_report.txt",
+            // mac
+            /*seqcnv(overlapRatio, "/Users/racing/Desktop/placenta3.5/report/CNV_report.txt",
                 "/Users/racing/Downloads/placenta_latest/simulatedRegions.txt");
             conifer(overlapRatio, "/Users/racing/Downloads/placenta_latest/CoNIFER/svd_5.txt",
                 "/Users/racing/Downloads/placenta_latest/simulatedRegions.txt");
@@ -47,7 +48,22 @@ public class PrecisionRecall {
             cnver(overlapRatio, "/Users/racing/Downloads/placenta_latest/CNVer",
                 "/Users/racing/Downloads/placenta_latest/simulatedRegions.txt");
             xhmm(overlapRatio, "/Users/racing/Downloads/placenta_latest/XHMM/DATA.xcnv",
-                "/Users/racing/Downloads/placenta_latest/simulatedRegions.txt");
+                "/Users/racing/Downloads/placenta_latest/simulatedRegions.txt");*/
+            // windows
+            seqcnv(overlapRatio,
+                "C:\\Users\\Administrator\\Desktop\\placenta_parameter\\placenta3.5_CNV_report.txt",
+                "D:\\placenta_latest\\simulatedRegions.txt");
+            conifer(overlapRatio, "D:\\placenta_latest\\CoNIFER\\svd_5.txt",
+                "D:\\placenta_latest\\simulatedRegions.txt");
+            cnvnator(overlapRatio, "D:\\placenta_latest\\CNVnator\\placenta_BAC_predict.txt",
+                "D:\\placenta_latest\\simulatedRegions.txt");
+            cnver(overlapRatio, "D:\\placenta_latest\\CNVer",
+                "D:\\placenta_latest\\simulatedRegions.txt");
+            xhmm(overlapRatio, "D:\\placenta_latest\\XHMM\\DATA.xcnv",
+                "D:\\placenta_latest\\simulatedRegions.txt");
+            System.out.println();
+            System.out.println();
+            System.out.println();
         }
     }
 
@@ -275,9 +291,9 @@ public class PrecisionRecall {
                            + toolCNVRegions);
         System.out
             .println(
-                "Recall: " + String.format("%.2f", (double) predictedKnownRegions / knownRegions)
+                "Recall: " + String.format("%.3f", (double) predictedKnownRegions / knownRegions)
                      + ", Precision: "
-                     + String.format("%.2f", (double) uniqueCorrectedCNVRegions / toolCNVRegions));
+                     + String.format("%.3f", (double) uniqueCorrectedCNVRegions / toolCNVRegions));
         System.out.println();
     }
 
