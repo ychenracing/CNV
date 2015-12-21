@@ -37,9 +37,9 @@ public class PrecisionRecall {
     //    private static final Set<String>              excludedSamples     = new HashSet<>(
     //        Arrays.asList("NA18959", "NA18999", "NA19152", "NA18973", "NA12760", "NA18966", "NA19223")); // 前3个影响结果，后几个还未完成
     private static final Set<String>              excludedSamples     = new HashSet<>(
-        Arrays.asList("NA19152"));                                                                 // 前3个影响结果，后几个还未完成
+        Arrays.asList("NA18959", "NA18999", "NA19152"));                                           // 前3个影响结果，后几个还未完成
     private static final Set<String>              analysedChromosomes = new HashSet<>(
-        Arrays.asList("chr1", "chr4"));
+        Arrays.asList("chr1"));
 
     public static void main(String[] args) {
 
@@ -51,10 +51,10 @@ public class PrecisionRecall {
 
         float[] overlapRatios = { 0.001f, 0.01f, 0.1f, 0.5f };
         for (float overlapRatio : overlapRatios) {
-            seqcnv(overlapRatio, "C:\\Users\\Administrator\\Desktop\\chr1_chr4_result\\SeqCNV",
-                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // chr1_chr4
-            //            seqcnv(overlapRatio, "C:\\Users\\Administrator\\Desktop\\seqcnv_chr1",
-            //                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // only chr1
+            //            seqcnv(overlapRatio, "C:\\Users\\Administrator\\Desktop\\chr1_chr4_result\\SeqCNV",
+            //                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // chr1_chr4
+            seqcnv(overlapRatio, "C:\\Users\\Administrator\\Desktop\\seqcnv_chr1",
+                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // only chr1
             conifer(overlapRatio,
                 "C:\\Users\\Administrator\\Desktop\\chr1_chr4_result\\CoNIFER\\CoNIFER_chr1_chr4.tsv",
                 "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv");
@@ -393,8 +393,13 @@ public class PrecisionRecall {
                         //                        if ((float) predictLength
                         //                            / (float) knownRegion.getLength() >= overlapRatio) {
 
-                        if ((float) predictLength / (float) predictRegion
+                        if ((double) predictLength / (double) predictRegion
                             .getOverlapBaseLength(knownRegion) >= overlapRatio) {
+                            //                            System.out.println(predictLength + ":"
+                            //                                               + predictRegion.getOverlapBaseLength(knownRegion));
+                            //                            if (predictRegion.getOverlapBaseLength(knownRegion) == 0) {
+                            //                                System.out.println(predictRegion + " " + knownRegion);
+                            //                            }
                             samplePredictedKnownRegions.add(knownRegion);
                             sampleCorrectedCNVRegions.add(predictRegion);
 
@@ -454,8 +459,8 @@ public class PrecisionRecall {
                                  / sampleKnownCNVRegions.size();
             float samplePrecision = (float) sampleCorrectedCNVRegions.size()
                                     / sampleToolCNVRegions.size();
-            System.out.println(sample + ":" + String.format("%.3f", sampleRecall) + ", "
-                               + String.format("%.3f", samplePrecision));
+            System.out.println(sample + ":" + String.format("%.2f", sampleRecall) + ", "
+                               + String.format("%.2f", samplePrecision));
             preRecMap.put(sample, new Pair<>(sampleRecall, samplePrecision));
 
         }
@@ -497,9 +502,9 @@ public class PrecisionRecall {
                            + toolCNVRegions);
         System.out
             .println(
-                "Recall: " + String.format("%.3f", (double) predictedKnownRegions / knownCNVRegions)
+                "Recall: " + String.format("%.2f", (double) predictedKnownRegions / knownCNVRegions)
                      + ", Precision: "
-                     + String.format("%.3f", (double) uniqueCorrectedCNVRegions / toolCNVRegions));
+                     + String.format("%.2f", (double) uniqueCorrectedCNVRegions / toolCNVRegions));
         sampleSet.addAll(excludedSamples);
         sampleSet.removeAll(excludedSamples);
 
@@ -510,8 +515,8 @@ public class PrecisionRecall {
         double avgPrecision = preRecMap.entrySet().stream().mapToDouble(entry -> {
             return entry.getValue().getSecond();
         }).sum() / analysedSampleCount;
-        System.out.println("Recall: " + String.format("%.3f", avgRecall) + ", Precision: "
-                           + String.format("%.3f", avgPrecision) + " (average)");
+        System.out.println("Recall: " + String.format("%.2f", avgRecall) + ", Precision: "
+                           + String.format("%.2f", avgPrecision) + " (average)");
 
     }
 

@@ -46,6 +46,20 @@ public class Region implements Comparable<Region> {
     }
 
     /**
+     * judge if number located at the position between start and end.
+     * @param number
+     * @param start
+     * @param end
+     * @return
+     */
+    private boolean isBetween(long number, long start, long end) {
+        if (number >= start && number <= end) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * judge if this region overlaps with other region
      * @param other
      * @return 
@@ -53,9 +67,10 @@ public class Region implements Comparable<Region> {
     public boolean isOverlapped(Region other) {
         if (!this.chr.equals(other.chr))
             return false;
-        if (this.start <= other.start && this.end >= other.end
-            || this.start <= other.end && this.end >= other.end
-            || this.start >= other.start && this.end <= other.end) {
+        if (isBetween(this.getStart(), other.getStart(), other.getEnd())
+            || isBetween(this.getEnd(), other.getStart(), other.getEnd())
+            || isBetween(other.getStart(), this.getStart(), this.getEnd())
+            || isBetween(other.getEnd(), this.getStart(), this.getEnd())) {
             return true;
         }
         return false;
@@ -77,7 +92,11 @@ public class Region implements Comparable<Region> {
                 overlapLength = other.getEnd() - other.getStart();
             }
         } else {
-            overlapLength = other.getEnd() - this.getStart();
+            if (other.getEnd() >= this.getEnd()) {
+                overlapLength = this.getEnd() - this.getStart();
+            } else {
+                overlapLength = other.getEnd() - this.getStart();
+            }
         }
         return overlapLength;
     }
@@ -98,7 +117,11 @@ public class Region implements Comparable<Region> {
                 sumBaseLength = this.getEnd() - this.getStart();
             }
         } else {
-            sumBaseLength = this.getEnd() - other.getStart();
+            if (other.getEnd() >= this.getEnd()) {
+                sumBaseLength = other.getEnd() - other.getStart();
+            } else {
+                sumBaseLength = this.getEnd() - other.getStart();
+            }
         }
         return sumBaseLength;
     }
