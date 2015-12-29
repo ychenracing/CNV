@@ -18,7 +18,7 @@ import utils.Pair;
 import utils.Region;
 
 /**
- * 还需加上sumOverlapAnalysis
+ * 
  * @author Administrator
  * @version $Id: PrecisionRecall.java, v 0.1 2015年12月18日 下午1:32:31 Administrator Exp $
  */
@@ -37,9 +37,9 @@ public class PrecisionRecall {
     //    private static final Set<String>              excludedSamples     = new HashSet<>(
     //        Arrays.asList("NA18959", "NA18999", "NA19152", "NA18973", "NA12760", "NA18966", "NA19223")); // 前3个影响结果，后几个还未完成
     private static final Set<String>              excludedSamples     = new HashSet<>(
-        Arrays.asList("NA18959", "NA18999", "NA19152"));                                           // 前3个影响结果，后几个还未完成
+        Arrays.asList("NA19152"));                                                                 // 前3个影响结果，后几个还未完成
     private static final Set<String>              analysedChromosomes = new HashSet<>(
-        Arrays.asList("chr1"));
+        Arrays.asList("chr1", "chr4"));
 
     public static void main(String[] args) {
 
@@ -49,12 +49,12 @@ public class PrecisionRecall {
         System.out.println("Analysed chromosomes are " + analysedChromosomes);
         System.out.println();
 
-        float[] overlapRatios = { 0.001f, 0.01f, 0.1f, 0.5f };
+        float[] overlapRatios = { 0.1f };
         for (float overlapRatio : overlapRatios) {
-            //            seqcnv(overlapRatio, "C:\\Users\\Administrator\\Desktop\\chr1_chr4_result\\SeqCNV",
-            //                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // chr1_chr4
-            seqcnv(overlapRatio, "C:\\Users\\Administrator\\Desktop\\seqcnv_chr1",
-                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // only chr1
+            seqcnv(overlapRatio, "C:\\Users\\Administrator\\Desktop\\chr1_chr4_result\\SeqCNV",
+                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // chr1_chr4
+            //            seqcnv(overlapRatio, "C:\\Users\\Administrator\\Desktop\\seqcnv_chr1",
+            //                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // only chr1
             conifer(overlapRatio,
                 "C:\\Users\\Administrator\\Desktop\\chr1_chr4_result\\CoNIFER\\CoNIFER_chr1_chr4.tsv",
                 "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv");
@@ -529,7 +529,7 @@ public class PrecisionRecall {
      * @param overlapRatio
      * @return num of the overlap regions exceed the overlapRatio
      */
-    public static int sumOverlap(Map<Region, Set<Region>> beneathRatioMap, float overlapRatio) {
+    private static int sumOverlap(Map<Region, Set<Region>> beneathRatioMap, float overlapRatio) {
         int sum = 0;
         for (Map.Entry<Region, Set<Region>> entry : beneathRatioMap.entrySet()) {
             Region knownRegion = entry.getKey();
