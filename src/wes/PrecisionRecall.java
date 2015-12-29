@@ -39,7 +39,7 @@ public class PrecisionRecall {
     private static final Set<String>              excludedSamples     = new HashSet<>(
         Arrays.asList("NA19152"));                                                                 // 前3个影响结果，后几个还未完成
     private static final Set<String>              analysedChromosomes = new HashSet<>(
-        Arrays.asList("chr1", "chr4"));
+        Arrays.asList("chr4"));
 
     public static void main(String[] args) {
 
@@ -55,6 +55,8 @@ public class PrecisionRecall {
                 "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // chr1_chr4
             //            seqcnv(overlapRatio, "C:\\Users\\Administrator\\Desktop\\seqcnv_chr1",
             //                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // only chr1
+            //            seqcnv(overlapRatio, "C:\\Users\\Administrator\\Desktop\\seqcnv_penalty_chr4",
+            //                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // only chr4
             conifer(overlapRatio,
                 "C:\\Users\\Administrator\\Desktop\\chr1_chr4_result\\CoNIFER\\CoNIFER_chr1_chr4.tsv",
                 "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv");
@@ -114,8 +116,13 @@ public class PrecisionRecall {
             seqcnvResultLines.stream().forEach(line -> {
                 String[] feature = line.split("\\s+");
                 feature[0] = feature[0].length() < 3 ? "chr" + feature[0] : feature[0];
-                if (analysedChromosomes.contains(feature[0]))
-                    seqcnvRegions.add(new Region(feature[0], feature[1], feature[2]));
+                if (analysedChromosomes.contains(feature[0])) {
+                    Region predictedRegion = new Region(feature[0], feature[1], feature[2]);
+                    if (Float.parseFloat(feature[6]) <= 0.6) {
+                        predictedRegion.setType("LOSS");
+                    }
+                    seqcnvRegions.add(predictedRegion);
+                }
             });
             seqcnvPredictMap.put(sample, seqcnvRegions);
         }
@@ -157,6 +164,9 @@ public class PrecisionRecall {
             if (!analysedChromosomes.contains(feature[1]))
                 return;
             Region region = new Region(feature[1], feature[2], feature[3]);
+            if (feature[4].trim().equals("del")) {
+                region.setType("LOSS");
+            }
             if (coniferPredictMap.containsKey(coniferSample)) {
                 coniferPredictMap.get(coniferSample).add(region);
             } else {
@@ -208,10 +218,16 @@ public class PrecisionRecall {
             List<String> cnvnatorResultLines = readLines(resultFilePath);
             Set<Region> cnvnatorRegions = new HashSet<>();
             cnvnatorResultLines.stream().forEach(line -> {
-                String[] feature = line.split("\\s+")[1].replace(":", "-").split("-");
+                String[] lineFeature = line.split("\\s+");
+                String[] feature = lineFeature[1].replace(":", "-").split("-");
                 feature[0] = feature[0].length() < 3 ? "chr" + feature[0] : feature[0];
-                if (analysedChromosomes.contains(feature[0]))
-                    cnvnatorRegions.add(new Region(feature[0], feature[1], feature[2]));
+                if (analysedChromosomes.contains(feature[0])) {
+                    Region predictedRegion = new Region(feature[0], feature[1], feature[2]);
+                    if (lineFeature[0].trim().equals("deletion")) {
+                        predictedRegion.setType("LOSS");
+                    }
+                    cnvnatorRegions.add(predictedRegion);
+                }
             });
             cnvnatorPredictMap.put(sample, cnvnatorRegions);
         }
@@ -254,6 +270,9 @@ public class PrecisionRecall {
             if (!analysedChromosomes.contains(regionFeature[0]))
                 return;
             Region region = new Region(regionFeature[0], regionFeature[1], regionFeature[2]);
+            if (feature[1].trim().equals("DEL")) {
+                region.setType("LOSS");
+            }
             if (xhmmPredictMap.containsKey(sample)) {
                 xhmmPredictMap.get(sample).add(region);
             } else {
@@ -310,8 +329,13 @@ public class PrecisionRecall {
             excavatorResultLines.stream().forEach(line -> {
                 String[] feature = line.split("\\s+");
                 feature[0] = feature[0].length() < 3 ? "chr" + feature[0] : feature[0];
-                if (analysedChromosomes.contains(feature[0]))
-                    excavatorRegions.add(new Region(feature[0], feature[1], feature[2]));
+                if (analysedChromosomes.contains(feature[0])) {
+                    Region predictedRegion = new Region(feature[0], feature[1], feature[2]);
+                    if (Integer.parseInt(feature[6].trim()) < 0) {
+                        predictedRegion.setType("LOSS");
+                    }
+                    excavatorRegions.add(predictedRegion);
+                }
             });
             excavatorPredictMap.put(sample, excavatorRegions);
         }
@@ -329,6 +353,7 @@ public class PrecisionRecall {
     public static void outputPrecisionRecall(Float overlapRatio,
                                              Map<String, Set<Region>> toolPredictMap,
                                              String knownCNVFolder) {
+        outputPrecisionRecallBreakDancer(overlapRatio, toolPredictMap, knownCNVFolder);
         int predictedKnownRegions = 0;
         int uniqueCorrectedCNVRegions = 0;
         int knownCNVRegions = 0;
@@ -387,14 +412,14 @@ public class PrecisionRecall {
 
             for (Region predictRegion : sampleToolCNVRegions) {
                 for (Region knownRegion : sampleKnownCNVRegions) {
-                    if (knownRegion.isOverlapped(predictRegion)) {
-                        long predictLength = knownRegion.getOverlapLength(predictRegion);
+                    if (knownRegion.isOverlappedWithType(predictRegion)) {
+                        long predictLength = knownRegion.getOverlapLengthWithType(predictRegion);
 
                         //                        if ((float) predictLength
                         //                            / (float) knownRegion.getLength() >= overlapRatio) {
 
                         if ((double) predictLength / (double) predictRegion
-                            .getOverlapBaseLength(knownRegion) >= overlapRatio) {
+                            .getOverlapBaseLengthWithType(knownRegion) >= overlapRatio) {
                             //                            System.out.println(predictLength + ":"
                             //                                               + predictRegion.getOverlapBaseLength(knownRegion));
                             //                            if (predictRegion.getOverlapBaseLength(knownRegion) == 0) {
@@ -417,23 +442,23 @@ public class PrecisionRecall {
                                 predicted.add(knownRegion);
                                 predictedKnownRegionMap.put(sample, predicted);
                             }
-                        }
-                    } else {
-                        if (beneathMap.containsKey(sample)) {
-                            Map<Region, Set<Region>> beneathMapItem = beneathMap.get(sample);
-                            if (beneathMapItem.containsKey(knownRegion)) {
-                                beneathMapItem.get(knownRegion).add(predictRegion);
+                        } else {
+                            if (beneathMap.containsKey(sample)) {
+                                Map<Region, Set<Region>> beneathMapItem = beneathMap.get(sample);
+                                if (beneathMapItem.containsKey(knownRegion)) {
+                                    beneathMapItem.get(knownRegion).add(predictRegion);
+                                } else {
+                                    Set<Region> beneathSet = new HashSet<>();
+                                    beneathSet.add(predictRegion);
+                                    beneathMapItem.put(knownRegion, beneathSet);
+                                }
                             } else {
                                 Set<Region> beneathSet = new HashSet<>();
                                 beneathSet.add(predictRegion);
+                                Map<Region, Set<Region>> beneathMapItem = new HashMap<>();
                                 beneathMapItem.put(knownRegion, beneathSet);
+                                beneathMap.put(sample, beneathMapItem);
                             }
-                        } else {
-                            Set<Region> beneathSet = new HashSet<>();
-                            beneathSet.add(predictRegion);
-                            Map<Region, Set<Region>> beneathMapItem = new HashMap<>();
-                            beneathMapItem.put(knownRegion, beneathSet);
-                            beneathMap.put(sample, beneathMapItem);
                         }
                     }
                 }
@@ -447,7 +472,7 @@ public class PrecisionRecall {
                     Set<Region> predictRegions = beneathEntry.getValue();
                     long overlapLength = 0;
                     for (Region predictRegion : predictRegions) {
-                        overlapLength += knownRegion.getOverlapLength(predictRegion);
+                        overlapLength += knownRegion.getOverlapLengthWithType(predictRegion);
                     }
                     if ((double) overlapLength / knownRegion.getLength() >= overlapRatio) {
                         extraPredictedKnown++;
@@ -465,24 +490,18 @@ public class PrecisionRecall {
 
         }
 
-        predictedKnownRegions += predictedKnownRegionMap.entrySet().stream().mapToInt(entry ->
-
-        {
+        predictedKnownRegions += predictedKnownRegionMap.entrySet().stream().mapToInt(entry -> {
             return entry.getValue().size();
         }).sum();
 
-        for (
-
-        Map.Entry<String, Map<Region, Set<Region>>> entry : beneathMap.entrySet())
-
-        {
+        for (Map.Entry<String, Map<Region, Set<Region>>> entry : beneathMap.entrySet()) {
             Map<Region, Set<Region>> beneathMapItem = entry.getValue();
             for (Map.Entry<Region, Set<Region>> beneathEntry : beneathMapItem.entrySet()) {
                 Region knownRegion = beneathEntry.getKey();
                 Set<Region> predictRegions = beneathEntry.getValue();
                 long overlapLength = 0;
                 for (Region predictRegion : predictRegions) {
-                    overlapLength += knownRegion.getOverlapLength(predictRegion);
+                    overlapLength += knownRegion.getOverlapLengthWithType(predictRegion);
                 }
                 if ((double) overlapLength / knownRegion.getLength() >= overlapRatio) {
                     predictedKnownRegions++;
@@ -490,9 +509,226 @@ public class PrecisionRecall {
             }
         }
 
-        uniqueCorrectedCNVRegions = uniquePredictedRegionMap.entrySet().stream().mapToInt(entry ->
+        uniqueCorrectedCNVRegions = uniquePredictedRegionMap.entrySet().stream().mapToInt(entry -> {
+            return entry.getValue().size();
+        }).sum();
 
-        {
+        System.out.println("Predicted known CNV events: " + predictedKnownRegions
+                           + ", Unique correctly detected CNV events: " + uniqueCorrectedCNVRegions
+                           + ", Known CNV events: " + knownCNVRegions + ", Tool CNV events: "
+                           + toolCNVRegions);
+        System.out
+            .println(
+                "Recall: " + String.format("%.2f", (double) predictedKnownRegions / knownCNVRegions)
+                     + ", Precision: "
+                     + String.format("%.2f", (double) uniqueCorrectedCNVRegions / toolCNVRegions));
+        sampleSet.addAll(excludedSamples);
+        sampleSet.removeAll(excludedSamples);
+
+        int analysedSampleCount = sampleSet.size();
+        double avgRecall = preRecMap.entrySet().stream().mapToDouble(entry -> {
+            return entry.getValue().getFirst();
+        }).sum() / analysedSampleCount;
+        double avgPrecision = preRecMap.entrySet().stream().mapToDouble(entry -> {
+            return entry.getValue().getSecond();
+        }).sum() / analysedSampleCount;
+        System.out.println("Recall: " + String.format("%.2f", avgRecall) + ", Precision: "
+                           + String.format("%.2f", avgPrecision) + " (average)");
+
+    }
+
+    /**
+     * read known CNV regions and calculate precision & recall using BreakDancer standard:
+     * <p>
+     * A loss would not be considered as detected unless its overlapped region with a 
+     * predicted loss exceeds 50%, mutually. Since it’s more difficult to detect, 
+     * a gain was considered as detected once it overlapped a predicted gain.
+     * </p>
+     * If the overlap length exceeds 1bp(for copy GAIN), the region is correctly detected.
+     * If the overlap length doesn't exceed 50% of the predict Region(for copy LOSS), discard it.
+     * If the overlap length exceed 50% of both the predict Region and the known Region, then the region is correctly detected.
+     * @param overlapRatio
+     * @param toolPredictMap
+     * @param knownCNVFolder
+     */
+    public static void outputPrecisionRecallBreakDancer(Float overlapRatio,
+                                                        Map<String, Set<Region>> toolPredictMap,
+                                                        String knownCNVFolder) {
+        int predictedKnownRegions = 0;
+        int uniqueCorrectedCNVRegions = 0;
+        int knownCNVRegions = 0;
+        int toolCNVRegions = 0;
+
+        File knownCNVFolderFile = new File(knownCNVFolder);
+        String[] knownCNVFileNames = knownCNVFolderFile.list(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                if (name.endsWith("tsv"))
+                    return true;
+                return false;
+            }
+        });
+
+        for (String knownCNVFileName : knownCNVFileNames) {
+            String[] tmps = knownCNVFileName.replace("_", ".").split("\\."); // split里默认是正则表达式，要按照.分割的话需要转义
+            String sample = tmps[tmps.length - 2];
+            if (excludedSamples.contains(sample))
+                continue;
+            String knownCNVFilePath = knownCNVFolder + File.separator + knownCNVFileName;
+            readKnownCNVRegions(knownCNVFilePath, sample);
+        }
+
+        toolCNVRegions += toolPredictMap.entrySet().stream().mapToInt(entry -> {
+            return entry.getValue().size();
+        }).sum();
+
+        knownCNVRegions += knownCNVMap.entrySet().stream().mapToInt(entry -> {
+            String sample = entry.getKey();
+            if (excludedSamples.contains(sample))
+                return 0;
+            Set<Region> knownRegions = entry.getValue();
+            return knownRegions.stream().mapToInt(region -> {
+                if (region.getChr().equals("chr1") || region.getChr().equals("chr4"))
+                    return 1;
+                return 0;
+            }).sum();
+        }).sum();
+
+        Map<String, Map<Region, Set<Region>>> beneathMap = new HashMap<>(); // key为sample
+        Map<String, Set<Region>> predictedKnownRegionMap = new HashMap<>(); // key为sample
+        Map<String, Set<Region>> uniquePredictedRegionMap = new HashMap<>(); // key为sample
+
+        Map<String, Pair<Float, Float>> preRecMap = new HashMap<>(); // key为sample，value为该sample对应的recall和precision。
+
+        for (String sample : sampleSet) {
+            if (excludedSamples.contains(sample) || !toolPredictMap.containsKey(sample))
+                continue;
+            Set<Region> sampleToolCNVRegions = toolPredictMap.get(sample);
+            if (sampleToolCNVRegions == null || sampleToolCNVRegions.isEmpty())
+                continue;
+            Set<Region> sampleKnownCNVRegions = knownCNVMap.get(sample);
+            Set<Region> sampleCorrectedCNVRegions = new HashSet<>();
+            Set<Region> samplePredictedKnownRegions = new HashSet<>();
+
+            for (Region predictRegion : sampleToolCNVRegions) {
+                for (Region knownRegion : sampleKnownCNVRegions) {
+                    if (knownRegion.isOverlappedWithType(predictRegion)) {
+
+                        long predictLength = knownRegion.getOverlapLengthWithType(predictRegion);
+
+                        if (predictRegion.getType().toString().equals("GAIN")) { // the CNV region is copy gain region
+                            if (predictLength > 0) {
+                                samplePredictedKnownRegions.add(knownRegion);
+                                sampleCorrectedCNVRegions.add(predictRegion);
+
+                                if (uniquePredictedRegionMap.containsKey(sample)) {
+                                    uniquePredictedRegionMap.get(sample).add(predictRegion);
+                                } else {
+                                    Set<Region> predicted = new HashSet<>();
+                                    predicted.add(predictRegion);
+                                    uniquePredictedRegionMap.put(sample, predicted);
+                                }
+                                if (predictedKnownRegionMap.containsKey(sample)) {
+                                    predictedKnownRegionMap.get(sample).add(knownRegion);
+                                } else {
+                                    Set<Region> predicted = new HashSet<>();
+                                    predicted.add(knownRegion);
+                                    predictedKnownRegionMap.put(sample, predicted);
+                                }
+                            }
+                        } else { // the CNV region is copy gain region
+                            if ((double) predictLength
+                                / (double) predictRegion.getLength() >= overlapRatio) {
+                                if ((double) predictLength
+                                    / (double) knownRegion.getLength() >= overlapRatio) {
+                                    samplePredictedKnownRegions.add(knownRegion);
+                                    sampleCorrectedCNVRegions.add(predictRegion);
+
+                                    if (uniquePredictedRegionMap.containsKey(sample)) {
+                                        uniquePredictedRegionMap.get(sample).add(predictRegion);
+                                    } else {
+                                        Set<Region> predicted = new HashSet<>();
+                                        predicted.add(predictRegion);
+                                        uniquePredictedRegionMap.put(sample, predicted);
+                                    }
+                                    if (predictedKnownRegionMap.containsKey(sample)) {
+                                        predictedKnownRegionMap.get(sample).add(knownRegion);
+                                    } else {
+                                        Set<Region> predicted = new HashSet<>();
+                                        predicted.add(knownRegion);
+                                        predictedKnownRegionMap.put(sample, predicted);
+                                    }
+                                } else {
+                                    if (beneathMap.containsKey(sample)) {
+                                        Map<Region, Set<Region>> beneathMapItem = beneathMap
+                                            .get(sample);
+                                        if (beneathMapItem.containsKey(knownRegion)) {
+                                            beneathMapItem.get(knownRegion).add(predictRegion);
+                                        } else {
+                                            Set<Region> beneathSet = new HashSet<>();
+                                            beneathSet.add(predictRegion);
+                                            beneathMapItem.put(knownRegion, beneathSet);
+                                        }
+                                    } else {
+                                        Set<Region> beneathSet = new HashSet<>();
+                                        beneathSet.add(predictRegion);
+                                        Map<Region, Set<Region>> beneathMapItem = new HashMap<>();
+                                        beneathMapItem.put(knownRegion, beneathSet);
+                                        beneathMap.put(sample, beneathMapItem);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            int extraPredictedKnown = 0;
+            Map<Region, Set<Region>> sampleBeneathMap = beneathMap.get(sample);
+            if (sampleBeneathMap != null && !sampleBeneathMap.isEmpty()) {
+                for (Map.Entry<Region, Set<Region>> beneathEntry : sampleBeneathMap.entrySet()) {
+                    Region knownRegion = beneathEntry.getKey();
+                    Set<Region> predictRegions = beneathEntry.getValue();
+                    long overlapLength = 0;
+                    for (Region predictRegion : predictRegions) {
+                        overlapLength += knownRegion.getOverlapLengthWithType(predictRegion);
+                    }
+                    if ((double) overlapLength / knownRegion.getLength() >= overlapRatio) {
+                        extraPredictedKnown++;
+                    }
+                }
+            }
+
+            float sampleRecall = (float) (samplePredictedKnownRegions.size() + extraPredictedKnown)
+                                 / sampleKnownCNVRegions.size();
+            float samplePrecision = (float) sampleCorrectedCNVRegions.size()
+                                    / sampleToolCNVRegions.size();
+            System.out.println(sample + ":" + String.format("%.2f", sampleRecall) + ", "
+                               + String.format("%.2f", samplePrecision));
+            preRecMap.put(sample, new Pair<>(sampleRecall, samplePrecision));
+
+        }
+
+        predictedKnownRegions += predictedKnownRegionMap.entrySet().stream().mapToInt(entry -> {
+            return entry.getValue().size();
+        }).sum();
+
+        for (Map.Entry<String, Map<Region, Set<Region>>> entry : beneathMap.entrySet()) {
+            Map<Region, Set<Region>> beneathMapItem = entry.getValue();
+            for (Map.Entry<Region, Set<Region>> beneathEntry : beneathMapItem.entrySet()) {
+                Region knownRegion = beneathEntry.getKey();
+                Set<Region> predictRegions = beneathEntry.getValue();
+                long overlapLength = 0;
+                for (Region predictRegion : predictRegions) {
+                    overlapLength += knownRegion.getOverlapLengthWithType(predictRegion);
+                }
+                if ((double) overlapLength / knownRegion.getLength() >= overlapRatio) {
+                    predictedKnownRegions++;
+                }
+            }
+        }
+
+        uniqueCorrectedCNVRegions = uniquePredictedRegionMap.entrySet().stream().mapToInt(entry -> {
             return entry.getValue().size();
         }).sum();
 
@@ -555,8 +791,13 @@ public class PrecisionRecall {
         knownCNVLines.stream().forEach(line -> {
             String[] feature = line.split("\\s+");
             feature[0] = feature[0].length() < 3 ? "chr" + feature[0] : feature[0];
-            if (analysedChromosomes.contains(feature[0]))
-                knownCNVRegions.add(new Region(feature[0], feature[1], feature[2]));
+            if (analysedChromosomes.contains(feature[0])) {
+                Region knownRegion = new Region(feature[0], feature[1], feature[2]);
+                if (feature[10].trim().equals("loss")) {
+                    knownRegion.setType("LOSS");
+                }
+                knownCNVRegions.add(knownRegion);
+            }
         });
         knownCNVMap.put(sample, knownCNVRegions);
     }
