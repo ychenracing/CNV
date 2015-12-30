@@ -39,7 +39,7 @@ public class PrecisionRecall {
     private static final Set<String>              excludedSamples     = new HashSet<>(
         Arrays.asList("NA19152"));                                                                 // 前3个影响结果，后几个还未完成
     private static final Set<String>              analysedChromosomes = new HashSet<>(
-        Arrays.asList("chr4"));
+        Arrays.asList("chr1", "chr4"));
 
     public static void main(String[] args) {
 
@@ -94,7 +94,7 @@ public class PrecisionRecall {
     public static void seqcnv(float overlapRatio, String seqcnvResultFolder,
                               String knownCNVFolder) {
         System.out.println("SeqCNV:");
-        System.out.println("Overlap ratio threshold is " + overlapRatio);
+        //        System.out.println("Overlap ratio threshold is " + overlapRatio);
 
         File folderFile = new File(seqcnvResultFolder);
         String[] sampleNames = folderFile.list(new FilenameFilter() {
@@ -152,7 +152,7 @@ public class PrecisionRecall {
     public static void conifer(float overlapRatio, String coniferResultFilePath,
                                String knownCNVFolder) {
         System.out.println("CoNIFER:");
-        System.out.println("Overlap ratio threshold is " + overlapRatio);
+        //        System.out.println("Overlap ratio threshold is " + overlapRatio);
 
         List<String> coniferResultLines = readLines(coniferResultFilePath);
         coniferResultLines.stream().forEach(line -> {
@@ -199,7 +199,7 @@ public class PrecisionRecall {
     public static void cnvnator(float overlapRatio, String cnvnatorResultFolder,
                                 String knownCNVFolder) {
         System.out.println("CNVnator:");
-        System.out.println("Overlap ratio threshold is " + overlapRatio);
+        //        System.out.println("Overlap ratio threshold is " + overlapRatio);
 
         File folderFile = new File(cnvnatorResultFolder);
         String[] sampleNames = folderFile.list(new FilenameFilter() {
@@ -255,7 +255,7 @@ public class PrecisionRecall {
      */
     public static void xhmm(float overlapRatio, String xhmmResultFilePath, String knownCNVFolder) {
         System.out.println("XHMM:");
-        System.out.println("Overlap ratio threshold is " + overlapRatio);
+        //        System.out.println("Overlap ratio threshold is " + overlapRatio);
 
         List<String> xhmmResultLines = readLines(xhmmResultFilePath);
         xhmmResultLines.remove(0); // drop header
@@ -306,7 +306,7 @@ public class PrecisionRecall {
     public static void excavator(float overlapRatio, String excavatorResultFolder,
                                  String knownCNVFolder) {
         System.out.println("EXCAVATOR:");
-        System.out.println("Overlap ratio threshold is " + overlapRatio);
+        //        System.out.println("Overlap ratio threshold is " + overlapRatio);
 
         File folderFile = new File(excavatorResultFolder);
         String[] sampleNames = folderFile.list(new FilenameFilter() {
@@ -354,10 +354,6 @@ public class PrecisionRecall {
                                              Map<String, Set<Region>> toolPredictMap,
                                              String knownCNVFolder) {
         outputPrecisionRecallBreakDancer(overlapRatio, toolPredictMap, knownCNVFolder);
-        int predictedKnownRegions = 0;
-        int uniqueCorrectedCNVRegions = 0;
-        int knownCNVRegions = 0;
-        int toolCNVRegions = 0;
 
         File knownCNVFolderFile = new File(knownCNVFolder);
         String[] knownCNVFileNames = knownCNVFolderFile.list(new FilenameFilter() {
@@ -377,22 +373,6 @@ public class PrecisionRecall {
             String knownCNVFilePath = knownCNVFolder + File.separator + knownCNVFileName;
             readKnownCNVRegions(knownCNVFilePath, sample);
         }
-
-        toolCNVRegions += toolPredictMap.entrySet().stream().mapToInt(entry -> {
-            return entry.getValue().size();
-        }).sum();
-
-        knownCNVRegions += knownCNVMap.entrySet().stream().mapToInt(entry -> {
-            String sample = entry.getKey();
-            if (excludedSamples.contains(sample))
-                return 0;
-            Set<Region> knownRegions = entry.getValue();
-            return knownRegions.stream().mapToInt(region -> {
-                if (region.getChr().equals("chr1") || region.getChr().equals("chr4"))
-                    return 1;
-                return 0;
-            }).sum();
-        }).sum();
 
         Map<String, Map<Region, Set<Region>>> beneathMap = new HashMap<>(); // key为sample
         Map<String, Set<Region>> predictedKnownRegionMap = new HashMap<>(); // key为sample
@@ -414,17 +394,8 @@ public class PrecisionRecall {
                 for (Region knownRegion : sampleKnownCNVRegions) {
                     if (knownRegion.isOverlappedWithType(predictRegion)) {
                         long predictLength = knownRegion.getOverlapLengthWithType(predictRegion);
-
-                        //                        if ((float) predictLength
-                        //                            / (float) knownRegion.getLength() >= overlapRatio) {
-
                         if ((double) predictLength / (double) predictRegion
                             .getOverlapBaseLengthWithType(knownRegion) >= overlapRatio) {
-                            //                            System.out.println(predictLength + ":"
-                            //                                               + predictRegion.getOverlapBaseLength(knownRegion));
-                            //                            if (predictRegion.getOverlapBaseLength(knownRegion) == 0) {
-                            //                                System.out.println(predictRegion + " " + knownRegion);
-                            //                            }
                             samplePredictedKnownRegions.add(knownRegion);
                             sampleCorrectedCNVRegions.add(predictRegion);
 
@@ -465,63 +436,40 @@ public class PrecisionRecall {
             }
 
             int extraPredictedKnown = 0;
+            Set<Region> extraCorrectlyPredictedRegions = new HashSet<>();
             Map<Region, Set<Region>> sampleBeneathMap = beneathMap.get(sample);
             if (sampleBeneathMap != null && !sampleBeneathMap.isEmpty()) {
                 for (Map.Entry<Region, Set<Region>> beneathEntry : sampleBeneathMap.entrySet()) {
                     Region knownRegion = beneathEntry.getKey();
                     Set<Region> predictRegions = beneathEntry.getValue();
+                    List<Region> mergedRegions = new ArrayList<>(); // 计算knownRegion和predictRegions的overlapBaseLength
+                    mergedRegions.add(knownRegion);
+                    mergedRegions.addAll(predictRegions);
+                    Region mergedPredictRegion = Region.mergeOverlappedRegions(mergedRegions);
+
                     long overlapLength = 0;
                     for (Region predictRegion : predictRegions) {
                         overlapLength += knownRegion.getOverlapLengthWithType(predictRegion);
                     }
-                    if ((double) overlapLength / knownRegion.getLength() >= overlapRatio) {
+
+                    if ((double) overlapLength / mergedPredictRegion.getLength() >= overlapRatio) {
                         extraPredictedKnown++;
+                        extraCorrectlyPredictedRegions.addAll(predictRegions);
                     }
                 }
             }
 
             float sampleRecall = (float) (samplePredictedKnownRegions.size() + extraPredictedKnown)
                                  / sampleKnownCNVRegions.size();
-            float samplePrecision = (float) sampleCorrectedCNVRegions.size()
+            float samplePrecision = (float) (sampleCorrectedCNVRegions.size()
+                                             + extraCorrectlyPredictedRegions.size())
                                     / sampleToolCNVRegions.size();
-            System.out.println(sample + ":" + String.format("%.2f", sampleRecall) + ", "
-                               + String.format("%.2f", samplePrecision));
+            //            System.out.println(sample + ":" + String.format("%.2f", sampleRecall) + ", "
+            //                               + String.format("%.2f", samplePrecision));
             preRecMap.put(sample, new Pair<>(sampleRecall, samplePrecision));
 
         }
 
-        predictedKnownRegions += predictedKnownRegionMap.entrySet().stream().mapToInt(entry -> {
-            return entry.getValue().size();
-        }).sum();
-
-        for (Map.Entry<String, Map<Region, Set<Region>>> entry : beneathMap.entrySet()) {
-            Map<Region, Set<Region>> beneathMapItem = entry.getValue();
-            for (Map.Entry<Region, Set<Region>> beneathEntry : beneathMapItem.entrySet()) {
-                Region knownRegion = beneathEntry.getKey();
-                Set<Region> predictRegions = beneathEntry.getValue();
-                long overlapLength = 0;
-                for (Region predictRegion : predictRegions) {
-                    overlapLength += knownRegion.getOverlapLengthWithType(predictRegion);
-                }
-                if ((double) overlapLength / knownRegion.getLength() >= overlapRatio) {
-                    predictedKnownRegions++;
-                }
-            }
-        }
-
-        uniqueCorrectedCNVRegions = uniquePredictedRegionMap.entrySet().stream().mapToInt(entry -> {
-            return entry.getValue().size();
-        }).sum();
-
-        System.out.println("Predicted known CNV events: " + predictedKnownRegions
-                           + ", Unique correctly detected CNV events: " + uniqueCorrectedCNVRegions
-                           + ", Known CNV events: " + knownCNVRegions + ", Tool CNV events: "
-                           + toolCNVRegions);
-        System.out
-            .println(
-                "Recall: " + String.format("%.2f", (double) predictedKnownRegions / knownCNVRegions)
-                     + ", Precision: "
-                     + String.format("%.2f", (double) uniqueCorrectedCNVRegions / toolCNVRegions));
         sampleSet.addAll(excludedSamples);
         sampleSet.removeAll(excludedSamples);
 
@@ -532,7 +480,8 @@ public class PrecisionRecall {
         double avgPrecision = preRecMap.entrySet().stream().mapToDouble(entry -> {
             return entry.getValue().getSecond();
         }).sum() / analysedSampleCount;
-        System.out.println("Recall: " + String.format("%.2f", avgRecall) + ", Precision: "
+        System.out.println(String.format("%16s", "OverlapRatio " + overlapRatio) + ": Recall: "
+                           + String.format("%.2f", avgRecall) + ", Precision: "
                            + String.format("%.2f", avgPrecision) + " (average)");
 
     }
@@ -554,11 +503,7 @@ public class PrecisionRecall {
     public static void outputPrecisionRecallBreakDancer(Float overlapRatio,
                                                         Map<String, Set<Region>> toolPredictMap,
                                                         String knownCNVFolder) {
-        int predictedKnownRegions = 0;
-        int uniqueCorrectedCNVRegions = 0;
-        int knownCNVRegions = 0;
-        int toolCNVRegions = 0;
-
+        overlapRatio = 0.5f;
         File knownCNVFolderFile = new File(knownCNVFolder);
         String[] knownCNVFileNames = knownCNVFolderFile.list(new FilenameFilter() {
             @Override
@@ -577,22 +522,6 @@ public class PrecisionRecall {
             String knownCNVFilePath = knownCNVFolder + File.separator + knownCNVFileName;
             readKnownCNVRegions(knownCNVFilePath, sample);
         }
-
-        toolCNVRegions += toolPredictMap.entrySet().stream().mapToInt(entry -> {
-            return entry.getValue().size();
-        }).sum();
-
-        knownCNVRegions += knownCNVMap.entrySet().stream().mapToInt(entry -> {
-            String sample = entry.getKey();
-            if (excludedSamples.contains(sample))
-                return 0;
-            Set<Region> knownRegions = entry.getValue();
-            return knownRegions.stream().mapToInt(region -> {
-                if (region.getChr().equals("chr1") || region.getChr().equals("chr4"))
-                    return 1;
-                return 0;
-            }).sum();
-        }).sum();
 
         Map<String, Map<Region, Set<Region>>> beneathMap = new HashMap<>(); // key为sample
         Map<String, Set<Region>> predictedKnownRegionMap = new HashMap<>(); // key为sample
@@ -636,7 +565,7 @@ public class PrecisionRecall {
                                     predictedKnownRegionMap.put(sample, predicted);
                                 }
                             }
-                        } else { // the CNV region is copy gain region
+                        } else { // the CNV region is copy loss region
                             if ((double) predictLength
                                 / (double) predictRegion.getLength() >= overlapRatio) {
                                 if ((double) predictLength
@@ -684,63 +613,39 @@ public class PrecisionRecall {
             }
 
             int extraPredictedKnown = 0;
+            Set<Region> extraCorrectlyPredictedRegions = new HashSet<>();
             Map<Region, Set<Region>> sampleBeneathMap = beneathMap.get(sample);
             if (sampleBeneathMap != null && !sampleBeneathMap.isEmpty()) {
                 for (Map.Entry<Region, Set<Region>> beneathEntry : sampleBeneathMap.entrySet()) {
                     Region knownRegion = beneathEntry.getKey();
                     Set<Region> predictRegions = beneathEntry.getValue();
+                    List<Region> mergedRegions = new ArrayList<>(); // 计算knownRegion和predictRegions的overlapBaseLength
+                    mergedRegions.add(knownRegion);
+                    mergedRegions.addAll(predictRegions);
+                    Region mergedPredictRegion = Region.mergeOverlappedRegions(mergedRegions);
+
                     long overlapLength = 0;
                     for (Region predictRegion : predictRegions) {
                         overlapLength += knownRegion.getOverlapLengthWithType(predictRegion);
                     }
-                    if ((double) overlapLength / knownRegion.getLength() >= overlapRatio) {
+                    if ((double) overlapLength / mergedPredictRegion.getLength() >= overlapRatio) {
                         extraPredictedKnown++;
+                        extraCorrectlyPredictedRegions.addAll(predictRegions);
                     }
                 }
             }
 
             float sampleRecall = (float) (samplePredictedKnownRegions.size() + extraPredictedKnown)
                                  / sampleKnownCNVRegions.size();
-            float samplePrecision = (float) sampleCorrectedCNVRegions.size()
+            float samplePrecision = (float) (sampleCorrectedCNVRegions.size()
+                                             + extraCorrectlyPredictedRegions.size())
                                     / sampleToolCNVRegions.size();
-            System.out.println(sample + ":" + String.format("%.2f", sampleRecall) + ", "
-                               + String.format("%.2f", samplePrecision));
+            //            System.out.println(sample + ":" + String.format("%.2f", sampleRecall) + ", "
+            //                               + String.format("%.2f", samplePrecision));
             preRecMap.put(sample, new Pair<>(sampleRecall, samplePrecision));
 
         }
 
-        predictedKnownRegions += predictedKnownRegionMap.entrySet().stream().mapToInt(entry -> {
-            return entry.getValue().size();
-        }).sum();
-
-        for (Map.Entry<String, Map<Region, Set<Region>>> entry : beneathMap.entrySet()) {
-            Map<Region, Set<Region>> beneathMapItem = entry.getValue();
-            for (Map.Entry<Region, Set<Region>> beneathEntry : beneathMapItem.entrySet()) {
-                Region knownRegion = beneathEntry.getKey();
-                Set<Region> predictRegions = beneathEntry.getValue();
-                long overlapLength = 0;
-                for (Region predictRegion : predictRegions) {
-                    overlapLength += knownRegion.getOverlapLengthWithType(predictRegion);
-                }
-                if ((double) overlapLength / knownRegion.getLength() >= overlapRatio) {
-                    predictedKnownRegions++;
-                }
-            }
-        }
-
-        uniqueCorrectedCNVRegions = uniquePredictedRegionMap.entrySet().stream().mapToInt(entry -> {
-            return entry.getValue().size();
-        }).sum();
-
-        System.out.println("Predicted known CNV events: " + predictedKnownRegions
-                           + ", Unique correctly detected CNV events: " + uniqueCorrectedCNVRegions
-                           + ", Known CNV events: " + knownCNVRegions + ", Tool CNV events: "
-                           + toolCNVRegions);
-        System.out
-            .println(
-                "Recall: " + String.format("%.2f", (double) predictedKnownRegions / knownCNVRegions)
-                     + ", Precision: "
-                     + String.format("%.2f", (double) uniqueCorrectedCNVRegions / toolCNVRegions));
         sampleSet.addAll(excludedSamples);
         sampleSet.removeAll(excludedSamples);
 
@@ -751,34 +656,10 @@ public class PrecisionRecall {
         double avgPrecision = preRecMap.entrySet().stream().mapToDouble(entry -> {
             return entry.getValue().getSecond();
         }).sum() / analysedSampleCount;
-        System.out.println("Recall: " + String.format("%.2f", avgRecall) + ", Precision: "
-                           + String.format("%.2f", avgPrecision) + " (average)");
+        System.out.println(
+            String.format("%16s", "BreakDancer") + ": Recall: " + String.format("%.2f", avgRecall)
+                           + ", Precision: " + String.format("%.2f", avgPrecision) + " (average)");
 
-    }
-
-    /**
-     * sum the overlap between the knownCNVRegion and predictCNVRegion, return the num of
-     * knownCNVRegions which was overlapped by predictCNVRegions exceed the overlapRatio.
-     * 
-     * @param beneathRatioMap key is knownCNVRegion, value is a set of predictCNVRegions which
-     *        overlap with the key but beneath the overlapRatio.
-     * @param overlapRatio
-     * @return num of the overlap regions exceed the overlapRatio
-     */
-    private static int sumOverlap(Map<Region, Set<Region>> beneathRatioMap, float overlapRatio) {
-        int sum = 0;
-        for (Map.Entry<Region, Set<Region>> entry : beneathRatioMap.entrySet()) {
-            Region knownRegion = entry.getKey();
-            Set<Region> predictRegions = entry.getValue();
-            long overlapLength = 0;
-            for (Region predictRegion : predictRegions) {
-                overlapLength += knownRegion.getOverlapLength(predictRegion);
-            }
-            if ((double) overlapLength / knownRegion.getLength() >= overlapRatio) {
-                sum++;
-            }
-        }
-        return sum;
     }
 
     private static void readKnownCNVRegions(String knownCNVFilePath, String sample) {
