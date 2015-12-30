@@ -327,6 +327,94 @@ public class PrecisionRecall {
         System.out.println();
     }
 
+    /**
+     * read known CNV regions and calculate precision & recall.
+     * @param overlapRatio
+     * @param toolPredictRegions
+     * @param knownCNVPath
+     */
+    public static void outputPrecisionRecallBreakDancer(Float overlapRatio,
+                                                        Set<Region> toolPredictRegions,
+                                                        String knownCNVPath) {
+        overlapRatio = 0.5f;
+        Set<Region> uniquePredictedRegions = new HashSet<>();
+
+        int predictedKnownRegions = 0;
+        int uniqueCorrectedCNVRegions = 0;
+        int knownRegions = 0;
+        int toolCNVRegions = 0;
+
+        readKnownCNVRegions(knownCNVPath);
+
+        toolCNVRegions += toolPredictRegions.size();
+        knownRegions += knownCNVRegions.size();
+
+        Map<Region, Set<Region>> beneathMap = new HashMap<>(); // overlap没有超过overlapRatio的那些regions，key为knownRegion，value为predictRegions
+        Set<Region> predictedKnownRegionSet = new HashSet<>(); // knownRegions中，被predict出来的那些region
+
+        for (Region predictRegion : toolPredictRegions) {
+            for (Region knownRegion : knownCNVRegions) {
+                if (knownRegion.isOverlappedWithType(predictRegion)) {
+                    long predictLength = knownRegion.getOverlapLengthWithType(predictRegion);
+
+                    if (predictRegion.getType().toString().equals("GAIN")) {
+                        if (predictLength > 0) {
+                            uniquePredictedRegions.add(predictRegion);
+                            predictedKnownRegionSet.add(knownRegion);
+                        }
+                    } else {
+                        if ((float) predictLength
+                            / (float) predictRegion.getLength() >= overlapRatio) {
+                            if ((float) predictLength
+                                / (float) knownRegion.getLength() >= overlapRatio) {
+                                uniquePredictedRegions.add(predictRegion);
+                                predictedKnownRegionSet.add(knownRegion);
+                            } else {
+                                if (beneathMap.containsKey(knownRegion)) {
+                                    beneathMap.get(knownRegion).add(predictRegion);
+                                } else {
+                                    Set<Region> regions = new HashSet<>();
+                                    regions.add(predictRegion);
+                                    beneathMap.put(knownRegion, regions);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        for (Map.Entry<Region, Set<Region>> entry : beneathMap.entrySet()) {
+            Region knownRegion = entry.getKey();
+            Set<Region> predictRegions = entry.getValue();
+            long overlapLength = 0;
+            List<Region> mergedRegions = new ArrayList<>(); // 计算knownRegion和predictRegions的overlapBaseLength
+            mergedRegions.add(knownRegion);
+            mergedRegions.addAll(predictRegions);
+            Region mergedPredictRegion = Region.mergeOverlappedRegions(mergedRegions);
+            for (Region predictRegion : predictRegions) {
+                overlapLength += knownRegion.getOverlapLengthWithType(predictRegion);
+            }
+            if ((double) overlapLength / mergedPredictRegion.getLength() >= overlapRatio) {
+                predictedKnownRegionSet.add(knownRegion);
+            }
+        }
+        predictedKnownRegions = predictedKnownRegionSet.size();
+
+        uniqueCorrectedCNVRegions = uniquePredictedRegions.size();
+
+        System.out.println("Correctly detected CNV events: " + predictedKnownRegions
+                           + ", Unique correctly detected CNV events: " + uniqueCorrectedCNVRegions
+                           + ", Known CNV events: " + knownRegions + ", Tool CNV events: "
+                           + toolCNVRegions);
+        System.out
+            .println(
+                "Recall: " + String.format("%.3f", (double) predictedKnownRegions / knownRegions)
+                     + ", Precision: "
+                     + String.format("%.3f", (double) uniqueCorrectedCNVRegions / toolCNVRegions));
+        System.out.println();
+    }
+
     private static void readKnownCNVRegions(String knownCNVFilePath) {
         if (!knownCNVRegions.isEmpty()) {
             return;
