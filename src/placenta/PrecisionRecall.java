@@ -38,7 +38,7 @@ public class PrecisionRecall {
         float[] overlapRatios = { 0.001f, 0.01f, 0.1f, 0.5f };
         for (float overlapRatio : overlapRatios) {
             // mac
-            seqcnv(overlapRatio, "/Users/racing/Desktop/placenta3.5/report/CNV_report.txt",
+            seqcnv(overlapRatio, "/Users/racing/Desktop/placenta3.5/report/20CNV_report.txt",
                 "/Users/racing/Downloads/placenta_latest/simulatedRegions.txt");
             conifer(overlapRatio, "/Users/racing/Downloads/placenta_latest/CoNIFER/svd_5.txt",
                 "/Users/racing/Downloads/placenta_latest/simulatedRegions.txt");
@@ -335,10 +335,7 @@ public class PrecisionRecall {
         knownCNVLines.stream().forEach(line -> {
             String[] feature = line.split("\\s+");
             feature[0] = feature[0].length() < 3 ? "chr" + feature[0] : feature[0];
-            Region knownRegion = new Region(feature[0], feature[1], feature[2]);
-            if (feature[10].trim().equals("loss")) {
-                knownRegion.setType("LOSS");
-            }
+            Region knownRegion = new Region(feature[0], feature[1], feature[2]); // only simulated duplication in placenta dataset.
             knownCNVRegions.add(knownRegion);
         });
     }
