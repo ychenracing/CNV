@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,35 +37,48 @@ public class PrecisionRecall {
         System.out.println("Precision = unique correctly detected events / total tool CNV events");
         System.out.println();
 
-        float[] overlapRatios = { 0.001f, 0.01f, 0.1f, 0.5f };
+        float[] overlapRatios = { 0.01f, 0.1f, 0.5f };
         for (float overlapRatio : overlapRatios) {
             // mac
-            seqcnv(overlapRatio, "/Users/racing/Desktop/placenta3.5/report/20CNV_report.txt",
-                "/Users/racing/Downloads/placenta_latest/simulatedRegions.txt");
-            conifer(overlapRatio, "/Users/racing/Downloads/placenta_latest/CoNIFER/svd_5.txt",
-                "/Users/racing/Downloads/placenta_latest/simulatedRegions.txt");
-            cnvnator(overlapRatio,
-                "/Users/racing/Downloads/placenta_latest/CNVnator/placenta_BAC_predict.txt",
-                "/Users/racing/Downloads/placenta_latest/simulatedRegions.txt");
-            cnver(overlapRatio, "/Users/racing/Downloads/placenta_latest/CNVer",
-                "/Users/racing/Downloads/placenta_latest/simulatedRegions.txt");
-            xhmm(overlapRatio, "/Users/racing/Downloads/placenta_latest/XHMM/DATA.xcnv",
-                "/Users/racing/Downloads/placenta_latest/simulatedRegions.txt");
+            //            seqcnv(overlapRatio, "/Users/racing/Desktop/placenta3.5/report/20CNV_report.txt",
+            //                "/Users/racing/Downloads/placenta_latest/simulatedRegions.txt");
+            //            conifer(overlapRatio, "/Users/racing/Downloads/placenta_latest/CoNIFER/svd_5.txt",
+            //                "/Users/racing/Downloads/placenta_latest/simulatedRegions.txt");
+            //            cnvnator(overlapRatio,
+            //                "/Users/racing/Downloads/placenta_latest/CNVnator/placenta_BAC_predict.txt",
+            //                "/Users/racing/Downloads/placenta_latest/simulatedRegions.txt");
+            //            cnver(overlapRatio, "/Users/racing/Downloads/placenta_latest/CNVer",
+            //                "/Users/racing/Downloads/placenta_latest/simulatedRegions.txt");
+            //            xhmm(overlapRatio, "/Users/racing/Downloads/placenta_latest/XHMM/DATA.xcnv",
+            //                "/Users/racing/Downloads/placenta_latest/simulatedRegions.txt");
             // windows
-            /*seqcnv(overlapRatio,
-            "C:\\Users\\Administrator\\Desktop\\placenta_parameter\\placenta3.5_CNV_report.txt",
-            "D:\\placenta_latest\\simulatedRegions.txt");
+            //            seqcnv(overlapRatio, "D:\\placenta_resultset\\seqcnv_previous\\report\\CNV_report.txt",
+            //                "D:\\placenta_latest\\simulatedRegions.txt"); // previous
+            //            seqcnv(overlapRatio,
+            //                "D:\\placenta_resultset\\seqcnv_previous_librarysize\\report\\CNV_report.txt",
+            //                "D:\\placenta_latest\\simulatedRegions.txt"); // previous_librarysize
+            //            seqcnv(overlapRatio, "D:\\placenta_resultset\\seqcnv_2stage\\report\\CNV_report.txt",
+            //                "D:\\placenta_latest\\simulatedRegions.txt"); // 2stage
+            //            seqcnv(overlapRatio,
+            //                "D:\\placenta_resultset\\seqcnv_2stage_merged\\report\\CNV_report.txt",
+            //                "D:\\placenta_latest\\simulatedRegions.txt"); // 2stage_merged
+            //            seqcnv(overlapRatio,
+            //                "D:\\placenta_resultset\\seqcnv_2stage_2timesPenalty\\report\\CNV_report.txt",
+            //                "D:\\placenta_latest\\simulatedRegions.txt"); // 2stage_2timesPenalty
+            seqcnv(overlapRatio,
+                "D:\\placenta_resultset\\seqcnv_2stage_2timesPenalty_merged\\report\\CNV_report.txt",
+                "D:\\placenta_latest\\simulatedRegions.txt"); // 2stage_2timesPenalty_merged
             conifer(overlapRatio, "D:\\placenta_latest\\CoNIFER\\svd_5.txt",
-            "D:\\placenta_latest\\simulatedRegions.txt");
+                "D:\\placenta_latest\\simulatedRegions.txt");
             cnvnator(overlapRatio, "D:\\placenta_latest\\CNVnator\\placenta_BAC_predict.txt",
-            "D:\\placenta_latest\\simulatedRegions.txt");
+                "D:\\placenta_latest\\simulatedRegions.txt");
             cnver(overlapRatio, "D:\\placenta_latest\\CNVer",
-            "D:\\placenta_latest\\simulatedRegions.txt");
+                "D:\\placenta_latest\\simulatedRegions.txt");
             xhmm(overlapRatio, "D:\\placenta_latest\\XHMM\\DATA.xcnv",
-            "D:\\placenta_latest\\simulatedRegions.txt");
+                "D:\\placenta_latest\\simulatedRegions.txt");
             System.out.println();
             System.out.println();
-            System.out.println();*/
+            System.out.println();
         }
     }
 
@@ -98,6 +113,7 @@ public class PrecisionRecall {
             }
             seqcnvPredictRegions.add(predictedRegion);
         });
+
         outputPrecisionRecall(overlapRatio, seqcnvPredictRegions, knownCNVPath);
     }
 
@@ -258,7 +274,7 @@ public class PrecisionRecall {
      */
     public static void outputPrecisionRecall(Float overlapRatio, Set<Region> toolPredictRegions,
                                              String knownCNVPath) {
-
+        outputPrecisionRecallBreakDancer(overlapRatio, toolPredictRegions, knownCNVPath);
         Set<Region> uniquePredictedRegions = new HashSet<>();
 
         int predictedKnownRegions = 0;
@@ -319,11 +335,20 @@ public class PrecisionRecall {
                            + ", Unique correctly detected CNV events: " + uniqueCorrectedCNVRegions
                            + ", Known CNV events: " + knownRegions + ", Tool CNV events: "
                            + toolCNVRegions);
-        System.out
-            .println(
-                "Recall: " + String.format("%.3f", (double) predictedKnownRegions / knownRegions)
-                     + ", Precision: "
-                     + String.format("%.3f", (double) uniqueCorrectedCNVRegions / toolCNVRegions));
+
+        float recall = (float) predictedKnownRegions / knownRegions;
+        float precision = (float) uniqueCorrectedCNVRegions / toolCNVRegions;
+
+        BigDecimal avgRecallRounded = new BigDecimal((double) recall);
+        avgRecallRounded = avgRecallRounded.setScale(2, RoundingMode.HALF_UP);
+        recall = avgRecallRounded.floatValue();
+
+        BigDecimal avgPrecisionRounded = new BigDecimal((double) precision);
+        avgPrecisionRounded = avgPrecisionRounded.setScale(2, RoundingMode.HALF_UP);
+        precision = avgPrecisionRounded.floatValue();
+
+        System.out.println("Recall: " + String.format("%.2f", recall) + ", Precision: "
+                           + String.format("%.2f", precision));
         System.out.println();
     }
 
@@ -407,11 +432,19 @@ public class PrecisionRecall {
                            + ", Unique correctly detected CNV events: " + uniqueCorrectedCNVRegions
                            + ", Known CNV events: " + knownRegions + ", Tool CNV events: "
                            + toolCNVRegions);
-        System.out
-            .println(
-                "Recall: " + String.format("%.3f", (double) predictedKnownRegions / knownRegions)
-                     + ", Precision: "
-                     + String.format("%.3f", (double) uniqueCorrectedCNVRegions / toolCNVRegions));
+        float recall = (float) predictedKnownRegions / knownRegions;
+        float precision = (float) uniqueCorrectedCNVRegions / toolCNVRegions;
+
+        BigDecimal avgRecallRounded = new BigDecimal((double) recall);
+        avgRecallRounded = avgRecallRounded.setScale(2, RoundingMode.HALF_UP);
+        recall = avgRecallRounded.floatValue();
+
+        BigDecimal avgPrecisionRounded = new BigDecimal((double) precision);
+        avgPrecisionRounded = avgPrecisionRounded.setScale(2, RoundingMode.HALF_UP);
+        precision = avgPrecisionRounded.floatValue();
+
+        System.out.println("Recall: " + String.format("%.2f", recall) + ", Precision: "
+                           + String.format("%.2f", precision));
         System.out.println();
     }
 

@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -49,10 +51,23 @@ public class PrecisionRecall {
         System.out.println("Analysed chromosomes are " + analysedChromosomes);
         System.out.println();
 
-        float[] overlapRatios = { 0.1f };
+        float[] overlapRatios = { 0.01f, 0.1f, 0.5f };
         for (float overlapRatio : overlapRatios) {
-            seqcnv(overlapRatio, "C:\\Users\\Administrator\\Desktop\\chr1_chr4_result\\SeqCNV",
-                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // chr1_chr4
+            //            seqcnv(overlapRatio, "C:\\Users\\Administrator\\Desktop\\chr1_chr4_result\\SeqCNV",
+            //                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // chr1_chr4
+            //            seqcnv(overlapRatio, "E:\\SeqCNV_previous_mergedBed",
+            //                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // mergedBed
+            //            seqcnv(overlapRatio, "E:\\SeqCNV_previous_nonMergedBed",
+            //                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // previous_librarysize
+            //
+            //            seqcnv(overlapRatio, "D:\\seqcnv_2stage_weschr1chr4",
+            //                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // 2stage
+            //            seqcnv(overlapRatio, "D:\\seqcnv_2stage_weschr1chr4_merged",
+            //                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // 2stage_merged
+            //            seqcnv(overlapRatio, "D:\\seqcnv_2stage_2timesPenalty_weschr1chr4",
+            //                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // 2stage_2timesPenalty
+            seqcnv(overlapRatio, "D:\\seqcnv_2stage_2timesPenalty_weschr1chr4_merged",
+                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // 2stage_2timesPenalty_merged
             //            seqcnv(overlapRatio, "C:\\Users\\Administrator\\Desktop\\seqcnv_chr1",
             //                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // only chr1
             //            seqcnv(overlapRatio, "C:\\Users\\Administrator\\Desktop\\seqcnv_penalty_chr4",
@@ -464,8 +479,8 @@ public class PrecisionRecall {
             float samplePrecision = (float) (sampleCorrectedCNVRegions.size()
                                              + extraCorrectlyPredictedRegions.size())
                                     / sampleToolCNVRegions.size();
-            //            System.out.println(sample + ":" + String.format("%.2f", sampleRecall) + ", "
-            //                               + String.format("%.2f", samplePrecision));
+            //            System.out.println(sample + ":" + String.format("%.3f", sampleRecall) + ", "
+            //                               + String.format("%.3f", samplePrecision));
             preRecMap.put(sample, new Pair<>(sampleRecall, samplePrecision));
 
         }
@@ -480,6 +495,15 @@ public class PrecisionRecall {
         double avgPrecision = preRecMap.entrySet().stream().mapToDouble(entry -> {
             return entry.getValue().getSecond();
         }).sum() / analysedSampleCount;
+
+        //        BigDecimal avgRecallRounded = new BigDecimal((double) avgRecall);
+        //        avgRecallRounded = avgRecallRounded.setScale(2, RoundingMode.HALF_UP);
+        //        avgRecall = avgRecallRounded.floatValue();
+        //
+        //        BigDecimal avgPrecisionRounded = new BigDecimal((double) avgPrecision);
+        //        avgPrecisionRounded = avgPrecisionRounded.setScale(2, RoundingMode.HALF_UP);
+        //        avgPrecision = avgPrecisionRounded.floatValue();
+
         System.out.println(String.format("%16s", "OverlapRatio " + overlapRatio) + ": Recall: "
                            + String.format("%.2f", avgRecall) + ", Precision: "
                            + String.format("%.2f", avgPrecision) + " (average)");
@@ -656,6 +680,15 @@ public class PrecisionRecall {
         double avgPrecision = preRecMap.entrySet().stream().mapToDouble(entry -> {
             return entry.getValue().getSecond();
         }).sum() / analysedSampleCount;
+
+        BigDecimal avgRecallRounded = new BigDecimal((double) avgRecall);
+        avgRecallRounded = avgRecallRounded.setScale(2, RoundingMode.HALF_UP);
+        avgRecall = avgRecallRounded.floatValue();
+
+        BigDecimal avgPrecisionRounded = new BigDecimal((double) avgPrecision);
+        avgPrecisionRounded = avgPrecisionRounded.setScale(2, RoundingMode.HALF_UP);
+        avgPrecision = avgPrecisionRounded.floatValue();
+
         System.out.println(
             String.format("%16s", "BreakDancer") + ": Recall: " + String.format("%.2f", avgRecall)
                            + ", Precision: " + String.format("%.2f", avgPrecision) + " (average)");
