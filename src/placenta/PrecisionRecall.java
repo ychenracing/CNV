@@ -3,7 +3,6 @@ package placenta;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -66,8 +65,11 @@ public class PrecisionRecall {
             //                "D:\\placenta_resultset\\seqcnv_2stage_2timesPenalty\\report\\CNV_report.txt",
             //                "D:\\placenta_latest\\simulatedRegions.txt"); // 2stage_2timesPenalty
             seqcnv(overlapRatio,
-                "D:\\placenta_resultset\\seqcnv_2stage_2timesPenalty_merged\\report\\CNV_report.txt",
-                "D:\\placenta_latest\\simulatedRegions.txt"); // 2stage_2timesPenalty_merged
+                "D:\\placenta_resultset\\seqcnv_2stage_2timesPenalty_librarysize\\report\\CNV_report.txt",
+                "D:\\placenta_latest\\simulatedRegions.txt"); // 2stage_2timesPenalty_librarysize
+            //            seqcnv(overlapRatio,
+            //                "D:\\placenta_resultset\\seqcnv_2stage_2timesPenalty_merged\\report\\CNV_report.txt",
+            //                "D:\\placenta_latest\\simulatedRegions.txt"); // 2stage_2timesPenalty_merged
             conifer(overlapRatio, "D:\\placenta_latest\\CoNIFER\\svd_5.txt",
                 "D:\\placenta_latest\\simulatedRegions.txt");
             cnvnator(overlapRatio, "D:\\placenta_latest\\CNVnator\\placenta_BAC_predict.txt",
@@ -104,7 +106,7 @@ public class PrecisionRecall {
         System.out.println("Overlap ratio threshold is " + overlapRatio);
 
         List<String> resultLines = readLines(seqcnvResultPath);
-        resultLines.stream().forEach(line -> {
+        resultLines.forEach(line -> {
             String[] feature = line.split("\\s+");
             feature[0] = feature[0].length() < 3 ? "chr" + feature[0] : feature[0];
             Region predictedRegion = new Region(feature[0], feature[1], feature[2]);
@@ -139,7 +141,7 @@ public class PrecisionRecall {
         System.out.println("Overlap ratio threshold is " + overlapRatio);
 
         List<String> resultLines = readLines(coniferResultFilePath);
-        resultLines.stream().forEach(line -> {
+        resultLines.forEach(line -> {
             String[] feature = line.split("\\s+");
             feature[1] = feature[1].length() < 3 ? "chr" + feature[1] : feature[1];
             Region region = new Region(feature[1], feature[2], feature[3]);
@@ -173,7 +175,7 @@ public class PrecisionRecall {
         System.out.println("Overlap ratio threshold is " + overlapRatio);
 
         List<String> resultLines = readLines(cnvnatorResultFilePath);
-        resultLines.stream().forEach(line -> {
+        resultLines.forEach(line -> {
             String[] feature = line.split("\\s+");
             String[] cnvFeature = feature[1].replace(":", "-").split("-");
             cnvFeature[0] = cnvFeature[0].length() < 3 ? "chr" + cnvFeature[0] : cnvFeature[0];
@@ -207,17 +209,10 @@ public class PrecisionRecall {
         System.out.println("Overlap ratio threshold is " + overlapRatio);
 
         File folderFile = new File(cnverResultFolder);
-        String[] resultFileNames = folderFile.list(new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                if (name.endsWith("cnvs"))
-                    return true;
-                return false;
-            }
-        });
+        String[] resultFileNames = folderFile.list((dir, name) -> name.endsWith("cnvs"));
         for (String fileName : resultFileNames) {
             List<String> resultLines = readLines(cnverResultFolder + File.separator + fileName);
-            resultLines.stream().forEach(line -> {
+            resultLines.forEach(line -> {
                 String[] feature = line.split("\\s+");
                 feature[0] = feature[0].length() < 3 ? "chr" + feature[0] : feature[0];
                 Region predictedRegion = new Region(feature[0], feature[1], feature[2]);
@@ -253,7 +248,7 @@ public class PrecisionRecall {
 
         List<String> resultLines = readLines(xhmmResultFilePath);
         resultLines.remove(0);
-        resultLines.stream().forEach(line -> {
+        resultLines.forEach(line -> {
             String[] feature = line.split("\\s+");
             String[] cnvFeature = feature[2].replace(":", "-").split("-");
             cnvFeature[0] = cnvFeature[0].length() < 3 ? "chr" + cnvFeature[0] : cnvFeature[0];
@@ -288,15 +283,15 @@ public class PrecisionRecall {
         knownRegions += knownCNVRegions.size();
 
         Map<Region, Set<Region>> beneathMap = new HashMap<>(); // overlap没有超过overlapRatio的那些regions，key为knownRegion，value为predictRegions
-        Set<Region> predictedKnownRegionSet = new HashSet<>(); // knownRegions中，被predict出来的那些region
+        Set<Region> predictedKnownRegionSet = new HashSet<>(); // knownRegions中，被predict出来的那些region，包括knownRegion与单个predictedRegion的overlap没有超过overlapRatio，与多个predictedRegion的overlap超过了overlapRatio的那个knownRegion
 
         for (Region predictRegion : toolPredictRegions) {
             for (Region knownRegion : knownCNVRegions) {
                 if (knownRegion.isOverlappedWithType(predictRegion)) {
                     long predictLength = knownRegion.getOverlapLengthWithType(predictRegion);
-                    //                    if ((float) predictLength / (float) knownRegion.getLength() >= overlapRatio) {
-                    if ((float) predictLength / (float) predictRegion
-                        .getOverlapBaseLengthWithType(knownRegion) >= overlapRatio) {
+                    if ((float) predictLength / (float) knownRegion.getLength() >= overlapRatio) {
+                        //                    if ((float) predictLength / (float) predictRegion
+                        //                        .getOverlapBaseLengthWithType(knownRegion) >= overlapRatio) {
                         uniquePredictedRegions.add(predictRegion);
                         predictedKnownRegionSet.add(knownRegion);
                     } else {
@@ -314,17 +309,20 @@ public class PrecisionRecall {
 
         for (Map.Entry<Region, Set<Region>> entry : beneathMap.entrySet()) {
             Region knownRegion = entry.getKey();
-            Set<Region> predictRegions = entry.getValue();
+            Set<Region> overlappedPredictedRegions = entry.getValue();
             long overlapLength = 0;
-            List<Region> mergedRegions = new ArrayList<>(); // 计算knownRegion和predictRegions的overlapBaseLength
-            mergedRegions.add(knownRegion);
-            mergedRegions.addAll(predictRegions);
-            Region mergedPredictRegion = Region.mergeOverlappedRegions(mergedRegions);
-            for (Region predictRegion : predictRegions) {
+            //            List<Region> mergedRegions = new ArrayList<>(); // 计算knownRegion和predictRegions的overlapBaseLength
+            //            mergedRegions.add(knownRegion);
+            //            mergedRegions.addAll(overlappedPredictedRegions);
+            //            Region mergedPredictedRegion = Region.mergeOverlappedRegions(mergedRegions);
+            for (Region predictRegion : overlappedPredictedRegions) {
                 overlapLength += knownRegion.getOverlapLengthWithType(predictRegion);
             }
-            if ((double) overlapLength / mergedPredictRegion.getLength() >= overlapRatio) {
+
+            //            if ((double) overlapLength / mergedPredictRegion.getLength() >= overlapRatio) {
+            if ((double) overlapLength / knownRegion.getLength() >= overlapRatio) {
                 predictedKnownRegionSet.add(knownRegion);
+                uniquePredictedRegions.addAll(overlappedPredictedRegions);
             }
         }
         predictedKnownRegions = predictedKnownRegionSet.size();
@@ -339,16 +337,18 @@ public class PrecisionRecall {
         float recall = (float) predictedKnownRegions / knownRegions;
         float precision = (float) uniqueCorrectedCNVRegions / toolCNVRegions;
 
+        System.out.println(precision);
+
         BigDecimal avgRecallRounded = new BigDecimal((double) recall);
-        avgRecallRounded = avgRecallRounded.setScale(2, RoundingMode.HALF_UP);
+        avgRecallRounded = avgRecallRounded.setScale(3, RoundingMode.HALF_UP);
         recall = avgRecallRounded.floatValue();
 
         BigDecimal avgPrecisionRounded = new BigDecimal((double) precision);
-        avgPrecisionRounded = avgPrecisionRounded.setScale(2, RoundingMode.HALF_UP);
+        avgPrecisionRounded = avgPrecisionRounded.setScale(3, RoundingMode.HALF_UP);
         precision = avgPrecisionRounded.floatValue();
 
-        System.out.println("Recall: " + String.format("%.2f", recall) + ", Precision: "
-                           + String.format("%.2f", precision));
+        System.out.println("Recall: " + String.format("%.3f", recall) + ", Precision: "
+                           + String.format("%.3f", precision));
         System.out.println();
     }
 
@@ -413,15 +413,17 @@ public class PrecisionRecall {
             Region knownRegion = entry.getKey();
             Set<Region> predictRegions = entry.getValue();
             long overlapLength = 0;
-            List<Region> mergedRegions = new ArrayList<>(); // 计算knownRegion和predictRegions的overlapBaseLength
-            mergedRegions.add(knownRegion);
-            mergedRegions.addAll(predictRegions);
-            Region mergedPredictRegion = Region.mergeOverlappedRegions(mergedRegions);
+            //            List<Region> mergedRegions = new ArrayList<>(); // 计算knownRegion和predictRegions的overlapBaseLength
+            //            mergedRegions.add(knownRegion);
+            //            mergedRegions.addAll(predictRegions);
+            //            Region mergedPredictRegion = Region.mergeOverlappedRegions(mergedRegions);
             for (Region predictRegion : predictRegions) {
                 overlapLength += knownRegion.getOverlapLengthWithType(predictRegion);
             }
-            if ((double) overlapLength / mergedPredictRegion.getLength() >= overlapRatio) {
+            //            if ((double) overlapLength / mergedPredictRegion.getLength() >= overlapRatio) {
+            if ((double) overlapLength / knownRegion.getLength() >= overlapRatio) {
                 predictedKnownRegionSet.add(knownRegion);
+                uniquePredictedRegions.addAll(predictRegions);
             }
         }
         predictedKnownRegions = predictedKnownRegionSet.size();
@@ -436,15 +438,15 @@ public class PrecisionRecall {
         float precision = (float) uniqueCorrectedCNVRegions / toolCNVRegions;
 
         BigDecimal avgRecallRounded = new BigDecimal((double) recall);
-        avgRecallRounded = avgRecallRounded.setScale(2, RoundingMode.HALF_UP);
+        avgRecallRounded = avgRecallRounded.setScale(3, RoundingMode.HALF_UP);
         recall = avgRecallRounded.floatValue();
 
         BigDecimal avgPrecisionRounded = new BigDecimal((double) precision);
-        avgPrecisionRounded = avgPrecisionRounded.setScale(2, RoundingMode.HALF_UP);
+        avgPrecisionRounded = avgPrecisionRounded.setScale(3, RoundingMode.HALF_UP);
         precision = avgPrecisionRounded.floatValue();
 
-        System.out.println("Recall: " + String.format("%.2f", recall) + ", Precision: "
-                           + String.format("%.2f", precision));
+        System.out.println("Recall: " + String.format("%.3f", recall) + ", Precision: "
+                           + String.format("%.3f", precision));
         System.out.println();
     }
 
@@ -453,7 +455,7 @@ public class PrecisionRecall {
             return;
         }
         List<String> knownCNVLines = readLines(knownCNVFilePath);
-        knownCNVLines.stream().forEach(line -> {
+        knownCNVLines.forEach(line -> {
             String[] feature = line.split("\\s+");
             feature[0] = feature[0].length() < 3 ? "chr" + feature[0] : feature[0];
             Region knownRegion = new Region(feature[0], feature[1], feature[2]); // only simulated duplication in placenta dataset.

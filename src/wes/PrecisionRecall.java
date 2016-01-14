@@ -36,10 +36,12 @@ public class PrecisionRecall {
         Arrays.asList("NA10847", "NA12760", "NA11840", "NA12761", "NA12249", "NA18959", "NA12717",
             "NA18966", "NA12751", "NA18967", "NA18970", "NA19138", "NA18973", "NA19153", "NA18981",
             "NA19159", "NA18999", "NA19206", "NA19131", "NA19223"));
+    //    private static final Set<String>              sampleSet           = new HashSet<>(
+    //        Arrays.asList("NA18959", "NA18999"));
     //    private static final Set<String>              excludedSamples     = new HashSet<>(
     //        Arrays.asList("NA18959", "NA18999", "NA19152", "NA18973", "NA12760", "NA18966", "NA19223")); // 前3个影响结果，后几个还未完成
     private static final Set<String>              excludedSamples     = new HashSet<>(
-        Arrays.asList("NA19152"));                                                                 // 前3个影响结果，后几个还未完成
+        Arrays.asList("NA19152", "NA19138"));                                                      // 前3个影响结果，后几个还未完成
     private static final Set<String>              analysedChromosomes = new HashSet<>(
         Arrays.asList("chr1", "chr4"));
 
@@ -66,23 +68,38 @@ public class PrecisionRecall {
             //                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // 2stage_merged
             //            seqcnv(overlapRatio, "D:\\seqcnv_2stage_2timesPenalty_weschr1chr4",
             //                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // 2stage_2timesPenalty
-            seqcnv(overlapRatio, "D:\\seqcnv_2stage_2timesPenalty_weschr1chr4_merged",
-                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // 2stage_2timesPenalty_merged
+            seqcnv(overlapRatio, "D:\\seqcnv_2stage_2timesPenalty_librarysize_weschr1chr4\\NA12717",
+                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // 2stage_2timesPenalty_librarysize
+            //            seqcnv(overlapRatio, "D:\\seqcnv_2stage_2timesPenalty_weschr1chr4_merged",
+            //                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // 2stage_2timesPenalty_merged
             //            seqcnv(overlapRatio, "C:\\Users\\Administrator\\Desktop\\seqcnv_chr1",
             //                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // only chr1
             //            seqcnv(overlapRatio, "C:\\Users\\Administrator\\Desktop\\seqcnv_penalty_chr4",
             //                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // only chr4
-            conifer(overlapRatio,
-                "C:\\Users\\Administrator\\Desktop\\chr1_chr4_result\\CoNIFER\\CoNIFER_chr1_chr4.tsv",
-                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv");
-            cnvnator(overlapRatio, "C:\\Users\\Administrator\\Desktop\\chr1_chr4_result\\CNVnator",
-                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv");
-            xhmm(overlapRatio,
-                "C:\\Users\\Administrator\\Desktop\\chr1_chr4_result\\XHMM\\DATA.xcnv",
-                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv");
+            //            conifer(overlapRatio,
+            //                "C:\\Users\\Administrator\\Desktop\\chr1_chr4_result\\CoNIFER\\CoNIFER_chr1_chr4.tsv",
+            //                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv");
+
+            //            conifer(overlapRatio,
+            //                "C:\\Users\\Administrator\\Desktop\\chr1_chr4_result\\CoNIFER\\CoNIFER_chr1_chr4.tsv",
+            //                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // whole_exome_bed
+            //            cnvnator(overlapRatio, "C:\\Users\\Administrator\\Desktop\\chr1_chr4_result\\CNVnator",
+            //                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv");
+
+            //            xhmm(overlapRatio,
+            //                "C:\\Users\\Administrator\\Desktop\\chr1_chr4_result\\XHMM\\DATA.xcnv",
+            //                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv");
+
+            //            xhmm(overlapRatio,
+            //                "C:\\Users\\Administrator\\Desktop\\chr1_chr4_result\\XHMM\\whole_exome_bed\\DATA.xcnv",
+            //                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // whole_exome_bed
+
+            //            excavator(overlapRatio,
+            //                "C:\\Users\\Administrator\\Desktop\\chr1_chr4_result\\EXCAVATOR",
+            //                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv");
             excavator(overlapRatio,
-                "C:\\Users\\Administrator\\Desktop\\chr1_chr4_result\\EXCAVATOR",
-                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv");
+                "C:\\Users\\Administrator\\Desktop\\chr1_chr4_result\\EXCAVATOR\\control_NA12717",
+                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // whole_exome_bed
             System.out.println();
             System.out.println();
             System.out.println();
@@ -409,8 +426,9 @@ public class PrecisionRecall {
                 for (Region knownRegion : sampleKnownCNVRegions) {
                     if (knownRegion.isOverlappedWithType(predictRegion)) {
                         long predictLength = knownRegion.getOverlapLengthWithType(predictRegion);
-                        if ((double) predictLength / (double) predictRegion
-                            .getOverlapBaseLengthWithType(knownRegion) >= overlapRatio) {
+                        //                        if ((double) predictLength / (double) predictRegion
+                        //                            .getOverlapBaseLengthWithType(knownRegion) >= overlapRatio) {
+                        if ((double) predictLength / knownRegion.getLength() >= overlapRatio) {
                             samplePredictedKnownRegions.add(knownRegion);
                             sampleCorrectedCNVRegions.add(predictRegion);
 
@@ -457,17 +475,18 @@ public class PrecisionRecall {
                 for (Map.Entry<Region, Set<Region>> beneathEntry : sampleBeneathMap.entrySet()) {
                     Region knownRegion = beneathEntry.getKey();
                     Set<Region> predictRegions = beneathEntry.getValue();
-                    List<Region> mergedRegions = new ArrayList<>(); // 计算knownRegion和predictRegions的overlapBaseLength
-                    mergedRegions.add(knownRegion);
-                    mergedRegions.addAll(predictRegions);
-                    Region mergedPredictRegion = Region.mergeOverlappedRegions(mergedRegions);
+                    //                    List<Region> mergedRegions = new ArrayList<>(); // 计算knownRegion和predictRegions的overlapBaseLength
+                    //                    mergedRegions.add(knownRegion);
+                    //                    mergedRegions.addAll(predictRegions);
+                    //                    Region mergedPredictRegion = Region.mergeOverlappedRegions(mergedRegions);
 
                     long overlapLength = 0;
                     for (Region predictRegion : predictRegions) {
                         overlapLength += knownRegion.getOverlapLengthWithType(predictRegion);
                     }
 
-                    if ((double) overlapLength / mergedPredictRegion.getLength() >= overlapRatio) {
+                    //                    if ((double) overlapLength / mergedPredictRegion.getLength() >= overlapRatio) {
+                    if ((double) overlapLength / knownRegion.getLength() >= overlapRatio) {
                         extraPredictedKnown++;
                         extraCorrectlyPredictedRegions.addAll(predictRegions);
                     }
@@ -479,8 +498,17 @@ public class PrecisionRecall {
             float samplePrecision = (float) (sampleCorrectedCNVRegions.size()
                                              + extraCorrectlyPredictedRegions.size())
                                     / sampleToolCNVRegions.size();
-            //            System.out.println(sample + ":" + String.format("%.3f", sampleRecall) + ", "
-            //                               + String.format("%.3f", samplePrecision));
+
+            BigDecimal avgSampleRecallRounded = new BigDecimal((double) sampleRecall);
+            avgSampleRecallRounded = avgSampleRecallRounded.setScale(3, RoundingMode.HALF_UP);
+            sampleRecall = avgSampleRecallRounded.floatValue();
+
+            BigDecimal avgSamplePrecisionRounded = new BigDecimal((double) samplePrecision);
+            avgSamplePrecisionRounded = avgSamplePrecisionRounded.setScale(3, RoundingMode.HALF_UP);
+            samplePrecision = avgSamplePrecisionRounded.floatValue();
+
+            System.out.println(sample + ":" + String.format("%.3f", sampleRecall) + ", "
+                               + String.format("%.3f", samplePrecision));
             preRecMap.put(sample, new Pair<>(sampleRecall, samplePrecision));
 
         }
@@ -496,17 +524,17 @@ public class PrecisionRecall {
             return entry.getValue().getSecond();
         }).sum() / analysedSampleCount;
 
-        //        BigDecimal avgRecallRounded = new BigDecimal((double) avgRecall);
-        //        avgRecallRounded = avgRecallRounded.setScale(2, RoundingMode.HALF_UP);
-        //        avgRecall = avgRecallRounded.floatValue();
-        //
-        //        BigDecimal avgPrecisionRounded = new BigDecimal((double) avgPrecision);
-        //        avgPrecisionRounded = avgPrecisionRounded.setScale(2, RoundingMode.HALF_UP);
-        //        avgPrecision = avgPrecisionRounded.floatValue();
+        BigDecimal avgRecallRounded = new BigDecimal((double) avgRecall);
+        avgRecallRounded = avgRecallRounded.setScale(3, RoundingMode.HALF_UP);
+        avgRecall = avgRecallRounded.floatValue();
+
+        BigDecimal avgPrecisionRounded = new BigDecimal((double) avgPrecision);
+        avgPrecisionRounded = avgPrecisionRounded.setScale(3, RoundingMode.HALF_UP);
+        avgPrecision = avgPrecisionRounded.floatValue();
 
         System.out.println(String.format("%16s", "OverlapRatio " + overlapRatio) + ": Recall: "
-                           + String.format("%.2f", avgRecall) + ", Precision: "
-                           + String.format("%.2f", avgPrecision) + " (average)");
+                           + String.format("%.3f", avgRecall) + ", Precision: "
+                           + String.format("%.3f", avgPrecision) + " (average)");
 
     }
 
@@ -664,8 +692,15 @@ public class PrecisionRecall {
             float samplePrecision = (float) (sampleCorrectedCNVRegions.size()
                                              + extraCorrectlyPredictedRegions.size())
                                     / sampleToolCNVRegions.size();
-            //            System.out.println(sample + ":" + String.format("%.2f", sampleRecall) + ", "
-            //                               + String.format("%.2f", samplePrecision));
+            BigDecimal avgSampleRecallRounded = new BigDecimal((double) sampleRecall);
+            avgSampleRecallRounded = avgSampleRecallRounded.setScale(3, RoundingMode.HALF_UP);
+            sampleRecall = avgSampleRecallRounded.floatValue();
+
+            BigDecimal avgSamplePrecisionRounded = new BigDecimal((double) samplePrecision);
+            avgSamplePrecisionRounded = avgSamplePrecisionRounded.setScale(3, RoundingMode.HALF_UP);
+            samplePrecision = avgSamplePrecisionRounded.floatValue();
+            System.out.println(sample + ":" + String.format("%.3f", sampleRecall) + ", "
+                               + String.format("%.3f", samplePrecision));
             preRecMap.put(sample, new Pair<>(sampleRecall, samplePrecision));
 
         }
@@ -682,16 +717,16 @@ public class PrecisionRecall {
         }).sum() / analysedSampleCount;
 
         BigDecimal avgRecallRounded = new BigDecimal((double) avgRecall);
-        avgRecallRounded = avgRecallRounded.setScale(2, RoundingMode.HALF_UP);
+        avgRecallRounded = avgRecallRounded.setScale(3, RoundingMode.HALF_UP);
         avgRecall = avgRecallRounded.floatValue();
 
         BigDecimal avgPrecisionRounded = new BigDecimal((double) avgPrecision);
-        avgPrecisionRounded = avgPrecisionRounded.setScale(2, RoundingMode.HALF_UP);
+        avgPrecisionRounded = avgPrecisionRounded.setScale(3, RoundingMode.HALF_UP);
         avgPrecision = avgPrecisionRounded.floatValue();
 
         System.out.println(
-            String.format("%16s", "BreakDancer") + ": Recall: " + String.format("%.2f", avgRecall)
-                           + ", Precision: " + String.format("%.2f", avgPrecision) + " (average)");
+            String.format("%16s", "BreakDancer") + ": Recall: " + String.format("%.3f", avgRecall)
+                           + ", Precision: " + String.format("%.3f", avgPrecision) + " (average)");
 
     }
 

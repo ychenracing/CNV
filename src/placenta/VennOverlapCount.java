@@ -3,7 +3,6 @@ package placenta;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,6 +19,8 @@ public class VennOverlapCount {
     private static Set<Region> cnvnatorResult = new HashSet<>();
     private static Set<Region> cnverResult    = new HashSet<>();
     private static Set<Region> xhmmResult     = new HashSet<>();
+
+    private static Set<Region> knownResult    = new HashSet<>();
 
     public static void main(String[] args) {
         readAllToolResult();
@@ -57,6 +58,30 @@ public class VennOverlapCount {
         //        System.out.println();
         System.out.println("Count_12345 = " + interactAverage(seqcnvResult, coniferResult,
             cnvnatorResult, cnverResult, xhmmResult));
+
+        System.out.println();
+        System.out.println();
+        System.out.println();
+        readKnownCNVRegions("D:\\placenta_latest\\simulatedRegions.txt");
+        System.out.println("SeqCNV vs knownCNV:");
+        System.out.println("area1 = " + seqcnvResult.size() + ", area2 = " + knownResult.size()
+                           + ", cross.area = " + interactAverage(seqcnvResult, knownResult));
+
+        System.out.println("CoNIFER vs knownCNV:");
+        System.out.println("area1 = " + coniferResult.size() + ", area2 = " + knownResult.size()
+                           + ", cross.area = " + interactAverage(coniferResult, knownResult));
+
+        System.out.println("CNVnator vs knownCNV:");
+        System.out.println("area1 = " + cnvnatorResult.size() + ", area2 = " + knownResult.size()
+                           + ", cross.area = " + interactAverage(cnvnatorResult, knownResult));
+
+        System.out.println("CNVer vs knownCNV:");
+        System.out.println("area1 = " + cnverResult.size() + ", area2 = " + knownResult.size()
+                           + ", cross.area = " + interactAverage(cnverResult, knownResult));
+
+        System.out.println("XHMM vs knownCNV:");
+        System.out.println("area1 = " + xhmmResult.size() + ", area2 = " + knownResult.size()
+                           + ", cross.area = " + interactAverage(xhmmResult, knownResult));
 
     }
 
@@ -115,8 +140,8 @@ public class VennOverlapCount {
         Set<Region> mergedSet2 = new HashSet<>();
         Set<Region> mergedSet3 = new HashSet<>();
 
-        set1.stream().forEach(region1 -> {
-            set2.stream().forEach(region2 -> {
+        set1.forEach(region1 -> {
+            set2.forEach(region2 -> {
                 if (region1.isOverlappedWithType(region2)) {
                     mergedSet1.add(region1);
                 }
@@ -127,8 +152,8 @@ public class VennOverlapCount {
             return 0;
         }
 
-        mergedSet1.stream().forEach(region1 -> {
-            set3.stream().forEach(region3 -> {
+        mergedSet1.forEach(region1 -> {
+            set3.forEach(region3 -> {
                 if (region1.isOverlappedWithType(region3)) {
                     mergedSet2.add(region1);
                 }
@@ -139,8 +164,8 @@ public class VennOverlapCount {
             return 0;
         }
 
-        mergedSet2.stream().forEach(region2 -> {
-            set4.stream().forEach(region4 -> {
+        mergedSet2.forEach(region2 -> {
+            set4.forEach(region4 -> {
                 if (region2.isOverlappedWithType(region4)) {
                     mergedSet3.add(region2);
                 }
@@ -210,8 +235,8 @@ public class VennOverlapCount {
         Set<Region> mergedSet1 = new HashSet<>();
         Set<Region> mergedSet2 = new HashSet<>();
 
-        set1.stream().forEach(region1 -> {
-            set2.stream().forEach(region2 -> {
+        set1.forEach(region1 -> {
+            set2.forEach(region2 -> {
                 if (region1.isOverlappedWithType(region2)) {
                     mergedSet1.add(region1);
                 }
@@ -222,8 +247,8 @@ public class VennOverlapCount {
             return 0;
         }
 
-        mergedSet1.stream().forEach(region1 -> {
-            set3.stream().forEach(region3 -> {
+        mergedSet1.forEach(region1 -> {
+            set3.forEach(region3 -> {
                 if (region1.isOverlappedWithType(region3)) {
                     mergedSet2.add(region1);
                 }
@@ -274,8 +299,8 @@ public class VennOverlapCount {
     public static int interact(Set<Region> set1, Set<Region> set2, Set<Region> set3) {
         Set<Region> mergedSet1 = new HashSet<>();
 
-        set1.stream().forEach(region1 -> {
-            set2.stream().forEach(region2 -> {
+        set1.forEach(region1 -> {
+            set2.forEach(region2 -> {
                 if (region1.isOverlappedWithType(region2)) {
                     mergedSet1.add(region1);
                 }
@@ -338,7 +363,7 @@ public class VennOverlapCount {
         String xhmmResultPath = "D:\\placenta_latest\\XHMM\\DATA.xcnv";
 
         List<String> resultLines = readLines(seqcnvResultPath);
-        resultLines.stream().forEach(line -> {
+        resultLines.forEach(line -> {
             String[] feature = line.split("\\s+");
             feature[0] = feature[0].length() < 3 ? "chr" + feature[0] : feature[0];
             Region predictedRegion = new Region(feature[0], feature[1], feature[2]);
@@ -349,7 +374,7 @@ public class VennOverlapCount {
         });
 
         resultLines = readLines(coniferResultPath);
-        resultLines.stream().forEach(line -> {
+        resultLines.forEach(line -> {
             String[] feature = line.split("\\s+");
             feature[1] = feature[1].length() < 3 ? "chr" + feature[1] : feature[1];
             Region region = new Region(feature[1], feature[2], feature[3]);
@@ -360,7 +385,7 @@ public class VennOverlapCount {
         });
 
         resultLines = readLines(cnvnatorResultPath);
-        resultLines.stream().forEach(line -> {
+        resultLines.forEach(line -> {
             String[] feature = line.split("\\s+");
             String[] cnvFeature = feature[1].replace(":", "-").split("-");
             cnvFeature[0] = cnvFeature[0].length() < 3 ? "chr" + cnvFeature[0] : cnvFeature[0];
@@ -372,17 +397,10 @@ public class VennOverlapCount {
         });
 
         File folderFile = new File(cnverResultFolder);
-        String[] resultFileNames = folderFile.list(new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                if (name.endsWith("cnvs"))
-                    return true;
-                return false;
-            }
-        });
+        String[] resultFileNames = folderFile.list((dir, name) -> name.endsWith("cnvs"));
         for (String fileName : resultFileNames) {
             resultLines = readLines(cnverResultFolder + File.separator + fileName);
-            resultLines.stream().forEach(line -> {
+            resultLines.forEach(line -> {
                 String[] feature = line.split("\\s+");
                 feature[0] = feature[0].length() < 3 ? "chr" + feature[0] : feature[0];
                 Region predictedRegion = new Region(feature[0], feature[1], feature[2]);
@@ -395,7 +413,7 @@ public class VennOverlapCount {
 
         resultLines = readLines(xhmmResultPath);
         resultLines.remove(0); // drop header
-        resultLines.stream().forEach(line -> {
+        resultLines.forEach(line -> {
             String[] feature = line.split("\\s+");
             String[] cnvFeature = feature[2].replace(":", "-").split("-");
             cnvFeature[0] = cnvFeature[0].length() < 3 ? "chr" + cnvFeature[0] : cnvFeature[0];
@@ -406,6 +424,19 @@ public class VennOverlapCount {
             xhmmResult.add(predictRegion);
         });
 
+    }
+
+    private static void readKnownCNVRegions(String knownCNVFilePath) {
+        if (!knownResult.isEmpty()) {
+            return;
+        }
+        List<String> knownCNVLines = readLines(knownCNVFilePath);
+        knownCNVLines.forEach(line -> {
+            String[] feature = line.split("\\s+");
+            feature[0] = feature[0].length() < 3 ? "chr" + feature[0] : feature[0];
+            Region knownRegion = new Region(feature[0], feature[1], feature[2]); // only simulated duplication in placenta dataset.
+            knownResult.add(knownRegion);
+        });
     }
 
     /**
