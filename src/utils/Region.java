@@ -1,13 +1,27 @@
 package utils;
 
 public class Region implements Comparable<Region> {
-    private String chr;
-    private long   start;
-    private long   end;
-    private Type   type;
+    private String  chr;
+    private long    start;
+    private long    end;
+    private CNVType type;
 
-    public enum Type {
-        GAIN, LOSS;
+    public enum CNVType {
+                         GAIN("gain"), LOSS("loss");
+
+        private String desc;
+
+        private CNVType(String desc) {
+            this.desc = desc;
+        }
+
+        public String getDesc() {
+            return desc;
+        }
+
+        public void setDesc(String desc) {
+            this.desc = desc;
+        }
     }
 
     public String getChr() {
@@ -38,22 +52,21 @@ public class Region implements Comparable<Region> {
         this.chr = chr;
         this.start = start;
         this.end = end;
-        this.type = Type.GAIN;
-    }
-
-    public Region(String chr, long start, long end, Type type) {
-        this.chr = chr;
-        this.start = start;
-        this.end = end;
-        this.type = type;
     }
 
     public Region(String chr, String start, String end) {
         this(chr, Long.parseLong(start), Long.parseLong(end));
     }
 
-    public Region(String chr, String start, String end, String type) {
-        this(chr, Long.parseLong(start), Long.parseLong(end), Type.valueOf(type));
+    public Region(String chr, long start, long end, CNVType type) {
+        this.chr = chr;
+        this.start = start;
+        this.end = end;
+        this.type = type;
+    }
+
+    public Region(String chr, String start, String end, CNVType type) {
+        this(chr, Long.parseLong(start), Long.parseLong(end), type);
     }
 
     public long getLength() {
@@ -62,6 +75,7 @@ public class Region implements Comparable<Region> {
 
     /**
      * judge if number located at the position between start and end.
+     * 
      * @param number
      * @param start
      * @param end
@@ -76,8 +90,9 @@ public class Region implements Comparable<Region> {
 
     /**
      * judge if this region overlaps with other region
+     * 
      * @param other
-     * @return 
+     * @return
      */
     public boolean isOverlapped(Region other) {
         if (!this.chr.equals(other.chr))
@@ -92,12 +107,15 @@ public class Region implements Comparable<Region> {
     }
 
     /**
-     * judge if this region overlaps with other region. If type of this region does not meet other region's type, return false.
+     * judge if this region overlaps with other region
+     * 
      * @param other
-     * @return 
+     *            other region
+     * @return true if this region and other region are the same type, and they overlap each other,
+     *         else false
      */
     public boolean isOverlappedWithType(Region other) {
-        if (!this.chr.equals(other.chr) || this.type != other.type)
+        if (this.type != other.type || !this.chr.equals(other.chr))
             return false;
         if (isBetween(this.getStart(), other.getStart(), other.getEnd())
             || isBetween(this.getEnd(), other.getStart(), other.getEnd())
@@ -108,8 +126,17 @@ public class Region implements Comparable<Region> {
         return false;
     }
 
+    public CNVType getType() {
+        return type;
+    }
+
+    public void setType(CNVType type) {
+        this.type = type;
+    }
+
     /**
      * return the overlap length between this region and other region.
+     * 
      * @param other
      * @return overlapLength
      */
@@ -134,7 +161,9 @@ public class Region implements Comparable<Region> {
     }
 
     /**
-     * return the overlap length between this region and other region. If type of this region does not meet other region's type, return 0.
+     * return the overlap length between this region and other region. If type of this region does
+     * not meet other region's type, return 0.
+     * 
      * @param other
      * @return overlapLength
      */
@@ -160,6 +189,7 @@ public class Region implements Comparable<Region> {
 
     /**
      * return sum of the base length of two regions overlapped.
+     * 
      * @param other
      * @return sum of the base length, 0 if the two regions not overlapped.
      */
@@ -184,7 +214,9 @@ public class Region implements Comparable<Region> {
     }
 
     /**
-     * return sum of the base length of two regions overlapped. If type of this region does not meet other region's type, return 0.
+     * return sum of the base length of two regions overlapped. If type of this region does not meet
+     * other region's type, return 0.
+     * 
      * @param other
      * @return sum of the base length, 0 if the two regions not overlapped.
      */
@@ -236,7 +268,7 @@ public class Region implements Comparable<Region> {
             else {
                 if (this.type == other.type)
                     return 0;
-                else if (this.type == Type.GAIN)
+                else if (this.type == CNVType.GAIN)
                     return 1;
                 else
                     return -1;
@@ -248,13 +280,4 @@ public class Region implements Comparable<Region> {
     public String toString() {
         return type.toString() + "\t" + chr + "\t" + start + "\t" + end;
     }
-
-    public Type getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = Type.valueOf(type);
-    }
-
 }
