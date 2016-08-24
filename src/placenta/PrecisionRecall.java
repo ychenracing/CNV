@@ -13,9 +13,11 @@ import java.util.Map;
 import java.util.Set;
 
 import utils.Region;
+import utils.Region.CNVType;
 
 /**
- * calculate precision & recall for placenta data. 
+ * calculate precision & recall for placenta data.
+ * 
  * @author racing
  * @version $Id: PrecisionRecall.java, v 0.1 Dec 2, 2015 19:37:39 PM racing Exp $
  */
@@ -50,25 +52,25 @@ public class PrecisionRecall {
             xhmm(overlapRatio, "/Users/racing/Downloads/placenta_latest/XHMM/DATA.xcnv",
                 "/Users/racing/Downloads/placenta_latest/simulatedRegions.txt");
             // windows
-            /*seqcnv(overlapRatio,
-            "C:\\Users\\Administrator\\Desktop\\placenta_parameter\\placenta3.5_CNV_report.txt",
-            "D:\\placenta_latest\\simulatedRegions.txt");
-            conifer(overlapRatio, "D:\\placenta_latest\\CoNIFER\\svd_5.txt",
-            "D:\\placenta_latest\\simulatedRegions.txt");
-            cnvnator(overlapRatio, "D:\\placenta_latest\\CNVnator\\placenta_BAC_predict.txt",
-            "D:\\placenta_latest\\simulatedRegions.txt");
-            cnver(overlapRatio, "D:\\placenta_latest\\CNVer",
-            "D:\\placenta_latest\\simulatedRegions.txt");
-            xhmm(overlapRatio, "D:\\placenta_latest\\XHMM\\DATA.xcnv",
-            "D:\\placenta_latest\\simulatedRegions.txt");
-            System.out.println();
-            System.out.println();
-            System.out.println();*/
+            /*
+             * seqcnv(overlapRatio,
+             * "C:\\Users\\Administrator\\Desktop\\placenta_parameter\\placenta3.5_CNV_report.txt",
+             * "D:\\placenta_latest\\simulatedRegions.txt"); conifer(overlapRatio,
+             * "D:\\placenta_latest\\CoNIFER\\svd_5.txt",
+             * "D:\\placenta_latest\\simulatedRegions.txt"); cnvnator(overlapRatio,
+             * "D:\\placenta_latest\\CNVnator\\placenta_BAC_predict.txt",
+             * "D:\\placenta_latest\\simulatedRegions.txt"); cnver(overlapRatio,
+             * "D:\\placenta_latest\\CNVer", "D:\\placenta_latest\\simulatedRegions.txt");
+             * xhmm(overlapRatio, "D:\\placenta_latest\\XHMM\\DATA.xcnv",
+             * "D:\\placenta_latest\\simulatedRegions.txt"); System.out.println();
+             * System.out.println(); System.out.println();
+             */
         }
     }
 
     /**
      * SeqCNV的overlap分析，输出precision和recall。
+     * 
      * <pre>
      * Note:
      * 1. 没有考虑SeqCNV的CNV region可能会包含多个known CNV region的情况。
@@ -94,7 +96,7 @@ public class PrecisionRecall {
             feature[0] = feature[0].length() < 3 ? "chr" + feature[0] : feature[0];
             Region predictedRegion = new Region(feature[0], feature[1], feature[2]);
             if (Float.parseFloat(feature[6]) <= 0.6) {
-                predictedRegion.setType("LOSS");
+                predictedRegion.setType(CNVType.LOSS);
             }
             seqcnvPredictRegions.add(predictedRegion);
         });
@@ -103,6 +105,7 @@ public class PrecisionRecall {
 
     /**
      * CoNIFER的overlap分析，输出precision和recall。
+     * 
      * <pre>
      * Note:
      * 1. 没有考虑CoNIFER的CNV region可能会包含多个known CNV region的情况。
@@ -113,6 +116,7 @@ public class PrecisionRecall {
      * 1. 不去掉，干脆重复计算。
      * 2. 去掉更短的重复region。（待做）
      * </pre>
+     * 
      * @param overlapRatio
      * @param coniferResultFilePath
      * @param knownCNVPath
@@ -128,7 +132,7 @@ public class PrecisionRecall {
             feature[1] = feature[1].length() < 3 ? "chr" + feature[1] : feature[1];
             Region region = new Region(feature[1], feature[2], feature[3]);
             if (feature[4].trim().equals("del")) {
-                region.setType("LOSS");
+                region.setType(CNVType.LOSS);
             }
             coniferPredictRegions.add(region);
         });
@@ -137,6 +141,7 @@ public class PrecisionRecall {
 
     /**
      * CNVnator的overlap分析，输出precision和recall。
+     * 
      * <pre>
      * Note:
      * 1. 没有考虑CNVnator的CNV region可能会包含多个known CNV region的情况。
@@ -147,6 +152,7 @@ public class PrecisionRecall {
      * 1. 不去掉，干脆重复计算。
      * 2. 去掉更短的重复region。（待做）
      * </pre>
+     * 
      * @param overlapRatio
      * @param cnvnatorResultFilePath
      * @param knownCNVPath
@@ -163,7 +169,7 @@ public class PrecisionRecall {
             cnvFeature[0] = cnvFeature[0].length() < 3 ? "chr" + cnvFeature[0] : cnvFeature[0];
             Region predictedRegion = new Region(cnvFeature[0], cnvFeature[1], cnvFeature[2]);
             if (feature[0].trim().equals("deletion")) {
-                predictedRegion.setType("LOSS");
+                predictedRegion.setType(CNVType.LOSS);
             }
             cnvnatorPredictRegions.add(predictedRegion);
         });
@@ -172,6 +178,7 @@ public class PrecisionRecall {
 
     /**
      * CNVer的overlap分析，输出precision和recall。
+     * 
      * <pre>
      * Note:
      * 1. 没有考虑CNVer的CNV region可能会包含多个known CNV region的情况。
@@ -182,6 +189,7 @@ public class PrecisionRecall {
      * 1. 不去掉，干脆重复计算。
      * 2. 去掉更短的重复region。（待做）
      * </pre>
+     * 
      * @param overlapRatio
      * @param cnvnatorResultFilePath
      * @param knownCNVPath
@@ -206,7 +214,7 @@ public class PrecisionRecall {
                 feature[0] = feature[0].length() < 3 ? "chr" + feature[0] : feature[0];
                 Region predictedRegion = new Region(feature[0], feature[1], feature[2]);
                 if (feature[3].trim().equals("loss")) {
-                    predictedRegion.setType("LOSS");
+                    predictedRegion.setType(CNVType.LOSS);
                 }
                 cnverPredictRegions.add(predictedRegion);
             });
@@ -216,6 +224,7 @@ public class PrecisionRecall {
 
     /**
      * XHMM的overlap分析，输出precision和recall。
+     * 
      * <pre>
      * Note:
      * 1. 没有考虑XHMM的CNV region可能会包含多个known CNV region的情况。
@@ -243,7 +252,7 @@ public class PrecisionRecall {
             cnvFeature[0] = cnvFeature[0].length() < 3 ? "chr" + cnvFeature[0] : cnvFeature[0];
             Region predictRegion = new Region(cnvFeature[0], cnvFeature[1], cnvFeature[2]);
             if (feature[1].trim().equals("DEL")) {
-                predictRegion.setType("LOSS");
+                predictRegion.setType(CNVType.LOSS);
             }
             xhmmPredictRegions.add(predictRegion);
         });
@@ -252,6 +261,7 @@ public class PrecisionRecall {
 
     /**
      * read known CNV regions and calculate precision & recall.
+     * 
      * @param overlapRatio
      * @param toolPredictRegions
      * @param knownCNVPath
@@ -278,7 +288,8 @@ public class PrecisionRecall {
             for (Region knownRegion : knownCNVRegions) {
                 if (knownRegion.isOverlappedWithType(predictRegion)) {
                     long predictLength = knownRegion.getOverlapLengthWithType(predictRegion);
-                    //                    if ((float) predictLength / (float) knownRegion.getLength() >= overlapRatio) {
+                    // if ((float) predictLength / (float) knownRegion.getLength() >= overlapRatio)
+                    // {
                     if ((float) predictLength / (float) predictRegion
                         .getOverlapBaseLengthWithType(knownRegion) >= overlapRatio) {
                         uniquePredictedRegions.add(predictRegion);
@@ -329,6 +340,7 @@ public class PrecisionRecall {
 
     /**
      * read known CNV regions and calculate precision & recall.
+     * 
      * @param overlapRatio
      * @param toolPredictRegions
      * @param knownCNVPath
@@ -423,7 +435,10 @@ public class PrecisionRecall {
         knownCNVLines.stream().forEach(line -> {
             String[] feature = line.split("\\s+");
             feature[0] = feature[0].length() < 3 ? "chr" + feature[0] : feature[0];
-            Region knownRegion = new Region(feature[0], feature[1], feature[2]); // only simulated duplication in placenta dataset.
+            Region knownRegion = new Region(feature[0], feature[1], feature[2]); // only simulated
+                                                                                 // duplication in
+                                                                                 // placenta
+                                                                                 // dataset.
             knownCNVRegions.add(knownRegion);
         });
     }

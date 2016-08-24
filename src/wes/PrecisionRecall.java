@@ -16,6 +16,7 @@ import java.util.Set;
 
 import utils.Pair;
 import utils.Region;
+import utils.Region.CNVType;
 
 /**
  *
@@ -34,10 +35,11 @@ public class PrecisionRecall {
         Arrays.asList("NA10847", "NA12760", "NA11840", "NA12761", "NA12249", "NA18959", "NA12717",
             "NA18966", "NA12751", "NA18967", "NA18970", "NA19138", "NA18973", "NA19153", "NA18981",
             "NA19159", "NA18999", "NA19206", "NA19131", "NA19223"));
-    //    private static final Set<String>              excludedSamples     = new HashSet<>(
-    //        Arrays.asList("NA18959", "NA18999", "NA19152", "NA18973", "NA12760", "NA18966", "NA19223")); // 前3个影响结果，后几个还未完成
+    // private static final Set<String> excludedSamples = new HashSet<>(
+    // Arrays.asList("NA18959", "NA18999", "NA19152", "NA18973", "NA12760", "NA18966", "NA19223"));
+    // // 前3个影响结果，后几个还未完成
     private static final Set<String>              excludedSamples     = new HashSet<>(
-        Arrays.asList("NA19152"));                                                                 // 前3个影响结果，后几个还未完成
+        Arrays.asList("NA19152"));                                                                                                                                                                                                                                                                                                                                                                                                      // 前3个影响结果，后几个还未完成
     private static final Set<String>              analysedChromosomes = new HashSet<>(
         Arrays.asList("chr1", "chr4"));
 
@@ -53,10 +55,10 @@ public class PrecisionRecall {
         for (float overlapRatio : overlapRatios) {
             seqcnv(overlapRatio, "C:\\Users\\Administrator\\Desktop\\chr1_chr4_result\\SeqCNV",
                 "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // chr1_chr4
-            //            seqcnv(overlapRatio, "C:\\Users\\Administrator\\Desktop\\seqcnv_chr1",
-            //                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // only chr1
-            //            seqcnv(overlapRatio, "C:\\Users\\Administrator\\Desktop\\seqcnv_penalty_chr4",
-            //                "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // only chr4
+            // seqcnv(overlapRatio, "C:\\Users\\Administrator\\Desktop\\seqcnv_chr1",
+            // "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // only chr1
+            // seqcnv(overlapRatio, "C:\\Users\\Administrator\\Desktop\\seqcnv_penalty_chr4",
+            // "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv"); // only chr4
             conifer(overlapRatio,
                 "C:\\Users\\Administrator\\Desktop\\chr1_chr4_result\\CoNIFER\\CoNIFER_chr1_chr4.tsv",
                 "C:\\Users\\Administrator\\Desktop\\known_cnv\\dgv_cnv");
@@ -76,6 +78,7 @@ public class PrecisionRecall {
 
     /**
      * SeqCNV的overlap分析，输出precision和recall。
+     * 
      * <pre>
      * Note:
      * 1. 没有考虑SeqCNV的CNV region可能会包含多个known CNV region的情况。
@@ -94,7 +97,7 @@ public class PrecisionRecall {
     public static void seqcnv(float overlapRatio, String seqcnvResultFolder,
                               String knownCNVFolder) {
         System.out.println("SeqCNV:");
-        //        System.out.println("Overlap ratio threshold is " + overlapRatio);
+        // System.out.println("Overlap ratio threshold is " + overlapRatio);
 
         File folderFile = new File(seqcnvResultFolder);
         String[] sampleNames = folderFile.list(new FilenameFilter() {
@@ -119,22 +122,23 @@ public class PrecisionRecall {
                 if (analysedChromosomes.contains(feature[0])) {
                     Region predictedRegion = new Region(feature[0], feature[1], feature[2]);
                     if (Float.parseFloat(feature[6]) <= 0.6) {
-                        predictedRegion.setType("LOSS");
+                        predictedRegion.setType(CNVType.LOSS);
                     }
                     seqcnvRegions.add(predictedRegion);
                 }
             });
             seqcnvPredictMap.put(sample, seqcnvRegions);
         }
-        //        for (Map.Entry<String, Set<Region>> entry : seqcnvPredictMap.entrySet()) {
-        //            System.out.println(entry.getKey() + ":" + entry.getValue().size());
-        //        }
+        // for (Map.Entry<String, Set<Region>> entry : seqcnvPredictMap.entrySet()) {
+        // System.out.println(entry.getKey() + ":" + entry.getValue().size());
+        // }
         outputPrecisionRecall(overlapRatio, seqcnvPredictMap, knownCNVFolder);
         System.out.println();
     }
 
     /**
      * CoNIFER的overlap分析，输出precision和recall。
+     * 
      * <pre>
      * Note:
      * 1. 没有考虑CoNIFER的CNV region可能会包含多个known CNV region的情况。
@@ -145,6 +149,7 @@ public class PrecisionRecall {
      * 1. 不去掉，干脆重复计算。
      * 2. 去掉更短的重复region。（待做）
      * </pre>
+     * 
      * @param overlapRatio
      * @param coniferResultFilePath
      * @param knownCNVFolder
@@ -152,7 +157,7 @@ public class PrecisionRecall {
     public static void conifer(float overlapRatio, String coniferResultFilePath,
                                String knownCNVFolder) {
         System.out.println("CoNIFER:");
-        //        System.out.println("Overlap ratio threshold is " + overlapRatio);
+        // System.out.println("Overlap ratio threshold is " + overlapRatio);
 
         List<String> coniferResultLines = readLines(coniferResultFilePath);
         coniferResultLines.stream().forEach(line -> {
@@ -165,7 +170,7 @@ public class PrecisionRecall {
                 return;
             Region region = new Region(feature[1], feature[2], feature[3]);
             if (feature[4].trim().equals("del")) {
-                region.setType("LOSS");
+                region.setType(CNVType.LOSS);
             }
             if (coniferPredictMap.containsKey(coniferSample)) {
                 coniferPredictMap.get(coniferSample).add(region);
@@ -182,6 +187,7 @@ public class PrecisionRecall {
 
     /**
      * CNVnator的overlap分析，输出precision和recall。
+     * 
      * <pre>
      * Note:
      * 1. 没有考虑CNVnator的CNV region可能会包含多个known CNV region的情况。
@@ -192,6 +198,7 @@ public class PrecisionRecall {
      * 1. 不去掉，干脆重复计算。
      * 2. 去掉更短的重复region。（待做）
      * </pre>
+     * 
      * @param overlapRatio
      * @param cnvnatorResultFolder
      * @param knownCNVFolder
@@ -199,7 +206,7 @@ public class PrecisionRecall {
     public static void cnvnator(float overlapRatio, String cnvnatorResultFolder,
                                 String knownCNVFolder) {
         System.out.println("CNVnator:");
-        //        System.out.println("Overlap ratio threshold is " + overlapRatio);
+        // System.out.println("Overlap ratio threshold is " + overlapRatio);
 
         File folderFile = new File(cnvnatorResultFolder);
         String[] sampleNames = folderFile.list(new FilenameFilter() {
@@ -224,7 +231,7 @@ public class PrecisionRecall {
                 if (analysedChromosomes.contains(feature[0])) {
                     Region predictedRegion = new Region(feature[0], feature[1], feature[2]);
                     if (lineFeature[0].trim().equals("deletion")) {
-                        predictedRegion.setType("LOSS");
+                        predictedRegion.setType(CNVType.LOSS);
                     }
                     cnvnatorRegions.add(predictedRegion);
                 }
@@ -238,6 +245,7 @@ public class PrecisionRecall {
 
     /**
      * XHMM的overlap分析，输出precision和recall。
+     * 
      * <pre>
      * Note:
      * 1. 没有考虑XHMM的CNV region可能会包含多个known CNV region的情况。
@@ -255,7 +263,7 @@ public class PrecisionRecall {
      */
     public static void xhmm(float overlapRatio, String xhmmResultFilePath, String knownCNVFolder) {
         System.out.println("XHMM:");
-        //        System.out.println("Overlap ratio threshold is " + overlapRatio);
+        // System.out.println("Overlap ratio threshold is " + overlapRatio);
 
         List<String> xhmmResultLines = readLines(xhmmResultFilePath);
         xhmmResultLines.remove(0); // drop header
@@ -271,7 +279,7 @@ public class PrecisionRecall {
                 return;
             Region region = new Region(regionFeature[0], regionFeature[1], regionFeature[2]);
             if (feature[1].trim().equals("DEL")) {
-                region.setType("LOSS");
+                region.setType(CNVType.LOSS);
             }
             if (xhmmPredictMap.containsKey(sample)) {
                 xhmmPredictMap.get(sample).add(region);
@@ -288,6 +296,7 @@ public class PrecisionRecall {
 
     /**
      * EXCAVATOR的overlap分析，输出precision和recall。
+     * 
      * <pre>
      * Note:
      * 1. 没有考虑EXCAVATOR的CNV region可能会包含多个known CNV region的情况。
@@ -306,7 +315,7 @@ public class PrecisionRecall {
     public static void excavator(float overlapRatio, String excavatorResultFolder,
                                  String knownCNVFolder) {
         System.out.println("EXCAVATOR:");
-        //        System.out.println("Overlap ratio threshold is " + overlapRatio);
+        // System.out.println("Overlap ratio threshold is " + overlapRatio);
 
         File folderFile = new File(excavatorResultFolder);
         String[] sampleNames = folderFile.list(new FilenameFilter() {
@@ -332,7 +341,7 @@ public class PrecisionRecall {
                 if (analysedChromosomes.contains(feature[0])) {
                     Region predictedRegion = new Region(feature[0], feature[1], feature[2]);
                     if (Integer.parseInt(feature[6].trim()) < 0) {
-                        predictedRegion.setType("LOSS");
+                        predictedRegion.setType(CNVType.LOSS);
                     }
                     excavatorRegions.add(predictedRegion);
                 }
@@ -346,6 +355,7 @@ public class PrecisionRecall {
 
     /**
      * read known CNV regions and calculate precision & recall.
+     * 
      * @param overlapRatio
      * @param toolPredictMap
      * @param knownCNVFolder
@@ -464,8 +474,8 @@ public class PrecisionRecall {
             float samplePrecision = (float) (sampleCorrectedCNVRegions.size()
                                              + extraCorrectlyPredictedRegions.size())
                                     / sampleToolCNVRegions.size();
-            //            System.out.println(sample + ":" + String.format("%.2f", sampleRecall) + ", "
-            //                               + String.format("%.2f", samplePrecision));
+            // System.out.println(sample + ":" + String.format("%.2f", sampleRecall) + ", "
+            // + String.format("%.2f", samplePrecision));
             preRecMap.put(sample, new Pair<>(sampleRecall, samplePrecision));
 
         }
@@ -489,13 +499,15 @@ public class PrecisionRecall {
     /**
      * read known CNV regions and calculate precision & recall using BreakDancer standard:
      * <p>
-     * A loss would not be considered as detected unless its overlapped region with a
-     * predicted loss exceeds 50%, mutually. Since it’s more difficult to detect,
-     * a gain was considered as detected once it overlapped a predicted gain.
+     * A loss would not be considered as detected unless its overlapped region with a predicted loss
+     * exceeds 50%, mutually. Since it’s more difficult to detect, a gain was considered as detected
+     * once it overlapped a predicted gain.
      * </p>
-     * If the overlap length exceeds 1bp(for copy GAIN), the region is correctly detected.
-     * If the overlap length doesn't exceed 50% of the predict Region(for copy LOSS), discard it.
-     * If the overlap length exceed 50% of both the predict Region and the known Region, then the region is correctly detected.
+     * If the overlap length exceeds 1bp(for copy GAIN), the region is correctly detected. If the
+     * overlap length doesn't exceed 50% of the predict Region(for copy LOSS), discard it. If the
+     * overlap length exceed 50% of both the predict Region and the known Region, then the region is
+     * correctly detected.
+     * 
      * @param overlapRatio
      * @param toolPredictMap
      * @param knownCNVFolder
@@ -545,7 +557,9 @@ public class PrecisionRecall {
 
                         long predictLength = knownRegion.getOverlapLengthWithType(predictRegion);
 
-                        if (predictRegion.getType().toString().equals("GAIN")) { // the CNV region is copy gain region
+                        if (predictRegion.getType().toString().equals("GAIN")) { // the CNV region
+                                                                                 // is copy gain
+                                                                                 // region
                             if (predictLength > 0) {
                                 samplePredictedKnownRegions.add(knownRegion);
                                 sampleCorrectedCNVRegions.add(predictRegion);
@@ -640,8 +654,8 @@ public class PrecisionRecall {
             float samplePrecision = (float) (sampleCorrectedCNVRegions.size()
                                              + extraCorrectlyPredictedRegions.size())
                                     / sampleToolCNVRegions.size();
-            //            System.out.println(sample + ":" + String.format("%.2f", sampleRecall) + ", "
-            //                               + String.format("%.2f", samplePrecision));
+            // System.out.println(sample + ":" + String.format("%.2f", sampleRecall) + ", "
+            // + String.format("%.2f", samplePrecision));
             preRecMap.put(sample, new Pair<>(sampleRecall, samplePrecision));
 
         }
@@ -675,7 +689,7 @@ public class PrecisionRecall {
             if (analysedChromosomes.contains(feature[0])) {
                 Region knownRegion = new Region(feature[0], feature[1], feature[2]);
                 if (feature[10].trim().equals("loss")) {
-                    knownRegion.setType("LOSS");
+                    knownRegion.setType(CNVType.LOSS);
                 }
                 knownCNVRegions.add(knownRegion);
             }

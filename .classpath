@@ -2,10 +2,5 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="E:/Dev_programs/apache-maven-3.3.9/repo/com/google/guava/guava/18.0/guava-18.0.jar" sourcepath="E:/Dev_programs/apache-maven-3.3.9/repo/com/google/guava/guava/18.0/guava-18.0-sources.jar">
-		<attributes>
-			<attribute name="source_encoding" value="UTF-8"/>
-		</attributes>
-	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
