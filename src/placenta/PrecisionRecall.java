@@ -258,7 +258,7 @@ public class PrecisionRecall {
      */
     public static void outputPrecisionRecall(Float overlapRatio, Set<Region> toolPredictRegions,
                                              String knownCNVPath) {
-
+        outputPrecisionRecallBreakDancer(overlapRatio, toolPredictRegions, knownCNVPath);
         Set<Region> uniquePredictedRegions = new HashSet<>();
 
         int predictedKnownRegions = 0;
@@ -315,7 +315,7 @@ public class PrecisionRecall {
 
         uniqueCorrectedCNVRegions = uniquePredictedRegions.size();
 
-        System.out.println("Correctly detected CNV events: " + predictedKnownRegions
+        System.out.println("Predicted known CNV events: " + predictedKnownRegions
                            + ", Unique correctly detected CNV events: " + uniqueCorrectedCNVRegions
                            + ", Known CNV events: " + knownRegions + ", Tool CNV events: "
                            + toolCNVRegions);

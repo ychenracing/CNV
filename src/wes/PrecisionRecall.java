@@ -18,7 +18,7 @@ import utils.Pair;
 import utils.Region;
 
 /**
- * 
+ *
  * @author Administrator
  * @version $Id: PrecisionRecall.java, v 0.1 2015年12月18日 下午1:32:31 Administrator Exp $
  */
@@ -80,13 +80,13 @@ public class PrecisionRecall {
      * Note:
      * 1. 没有考虑SeqCNV的CNV region可能会包含多个known CNV region的情况。
      * 2. 如果known CNV region overlap了好几个predict CNV region, 会导致重复计算。
-     * 
+     *
      * Problem：
      * knownCNV中重复的region要不要去掉？
      * 1. 不去掉，干脆重复计算。
      * 2. 去掉更短的重复region。（待做）
      * </pre>
-     * 
+     *
      * @param overlapRatio
      * @param seqcnvResultFolder
      * @param knownCNVFolder
@@ -139,7 +139,7 @@ public class PrecisionRecall {
      * Note:
      * 1. 没有考虑CoNIFER的CNV region可能会包含多个known CNV region的情况。
      * 2. 如果known CNV region overlap了好几个predict CNV region, 会导致重复计算。
-     * 
+     *
      * Problem：
      * knownCNV中重复的region要不要去掉？
      * 1. 不去掉，干脆重复计算。
@@ -186,7 +186,7 @@ public class PrecisionRecall {
      * Note:
      * 1. 没有考虑CNVnator的CNV region可能会包含多个known CNV region的情况。
      * 2. 如果known CNV region overlap了好几个predict CNV region, 会导致重复计算。
-     * 
+     *
      * Problem：
      * knownCNV中重复的region要不要去掉？
      * 1. 不去掉，干脆重复计算。
@@ -242,13 +242,13 @@ public class PrecisionRecall {
      * Note:
      * 1. 没有考虑XHMM的CNV region可能会包含多个known CNV region的情况。
      * 2. 如果known CNV region overlap了好几个predict CNV region, 会导致重复计算。
-     * 
+     *
      * Problem：
      * knownCNV中重复的region要不要去掉？
      * 1. 不去掉，干脆重复计算。
      * 2. 去掉更短的重复region。（待做）
      * </pre>
-     * 
+     *
      * @param overlapRatio
      * @param xhmmResultFilePath
      * @param knownCNVFolder
@@ -292,13 +292,13 @@ public class PrecisionRecall {
      * Note:
      * 1. 没有考虑EXCAVATOR的CNV region可能会包含多个known CNV region的情况。
      * 2. 如果known CNV region overlap了好几个predict CNV region, 会导致重复计算。
-     * 
+     *
      * Problem：
      * knownCNV中重复的region要不要去掉？
      * 1. 不去掉，干脆重复计算。
      * 2. 去掉更短的重复region。（待做）
      * </pre>
-     * 
+     *
      * @param overlapRatio
      * @param excavatorResultFolder
      * @param knownCNVFolder
@@ -489,8 +489,8 @@ public class PrecisionRecall {
     /**
      * read known CNV regions and calculate precision & recall using BreakDancer standard:
      * <p>
-     * A loss would not be considered as detected unless its overlapped region with a 
-     * predicted loss exceeds 50%, mutually. Since it’s more difficult to detect, 
+     * A loss would not be considered as detected unless its overlapped region with a
+     * predicted loss exceeds 50%, mutually. Since it’s more difficult to detect,
      * a gain was considered as detected once it overlapped a predicted gain.
      * </p>
      * If the overlap length exceeds 1bp(for copy GAIN), the region is correctly detected.
@@ -685,7 +685,7 @@ public class PrecisionRecall {
 
     /**
      * read lines from file.
-     * 
+     *
      * @param filePath
      * @return lines of the file.
      */
