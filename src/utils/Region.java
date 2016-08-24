@@ -4,7 +4,24 @@ public class Region implements Comparable<Region> {
     private String chr;
     private long   start;
     private long   end;
-
+    private CNVType type;
+    
+    public enum CNVType {
+    	GAIN("gain"),
+    	LOSS("loss");
+    	
+    	private String desc;
+    	private CNVType(String desc) {
+    		this.desc = desc;
+		}
+		public String getDesc() {
+			return desc;
+		}
+		public void setDesc(String desc) {
+			this.desc = desc;
+		}
+    }
+    
     public String getChr() {
         return chr;
     }
@@ -36,9 +53,18 @@ public class Region implements Comparable<Region> {
     }
 
     public Region(String chr, String start, String end) {
+        this(chr, Long.parseLong(start), Long.parseLong(end));
+    }
+    
+    public Region(String chr, long start, long end, CNVType type) {
         this.chr = chr;
-        this.start = Long.parseLong(start);
-        this.end = Long.parseLong(end);
+        this.start = start;
+        this.end = end;
+        this.type = type;
+    }
+    
+    public Region(String chr, String start, String end, CNVType type) {
+        this(chr, Long.parseLong(start), Long.parseLong(end), type);
     }
 
     public long getLength() {
@@ -75,8 +101,35 @@ public class Region implements Comparable<Region> {
         }
         return false;
     }
-
+    
     /**
+     * judge if this region overlaps with other region
+     * 
+     * @param other other region
+     * @return true if this region and other region are the same type, 
+     * and they overlap each other, else false
+     */
+    public boolean isOverlappedWithType(Region other) {
+        if (this.type != other.type || !this.chr.equals(other.chr))
+            return false;
+        if (isBetween(this.getStart(), other.getStart(), other.getEnd())
+            || isBetween(this.getEnd(), other.getStart(), other.getEnd())
+            || isBetween(other.getStart(), this.getStart(), this.getEnd())
+            || isBetween(other.getEnd(), this.getStart(), this.getEnd())) {
+            return true;
+        }
+        return false;
+    }
+
+    public CNVType getType() {
+		return type;
+	}
+
+	public void setType(CNVType type) {
+		this.type = type;
+	}
+
+	/**
      * return the overlap length between this region and other region.
      * @param other
      * @return overlapLength
