@@ -1,5 +1,7 @@
 package utils;
 
+import java.util.List;
+
 public class Region implements Comparable<Region> {
     private String  chr;
     private long    start;
@@ -104,6 +106,31 @@ public class Region implements Comparable<Region> {
             return true;
         }
         return false;
+    }
+
+    public static Region mergeOverlappedRegion(Region region1, Region region2) {
+        if (!region1.isOverlappedWithType(region2)) {
+            System.out.println(region1 + " is not overlapped with " + region2);
+            return null;
+        }
+        Region result = new Region(region1.getChr(), region1.getStart(), region1.getEnd(),
+            region1.getType());
+        result.setStart(
+            region1.getStart() <= region2.getStart() ? region1.getStart() : region2.getStart());
+        result.setEnd(region1.getEnd() >= region2.getEnd() ? region1.getEnd() : region2.getEnd());
+        return result;
+    }
+
+    public static Region mergeOverlappedRegions(List<Region> regionList) {
+        Region[] regions = regionList.toArray(new Region[0]);
+        Region result = regions[0];
+        for (int i = 1; i < regions.length; i++) {
+            result = Region.mergeOverlappedRegion(result, regions[i]);
+            if (result == null) {
+                return null;
+            }
+        }
+        return result;
     }
 
     /**
