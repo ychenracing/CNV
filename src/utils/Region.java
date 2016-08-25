@@ -2,6 +2,8 @@ package utils;
 
 import java.util.List;
 
+import com.sun.org.apache.xpath.internal.operations.And;
+
 public class Region implements Comparable<Region> {
     private String  chr;
     private long    start;
@@ -9,7 +11,9 @@ public class Region implements Comparable<Region> {
     private CNVType type;
 
     public enum CNVType {
-                         GAIN("gain"), LOSS("loss");
+        GAIN("gain"),
+        LOSS("loss"),
+        GAINLOSS("gain/loss");
 
         private String desc;
 
@@ -142,7 +146,8 @@ public class Region implements Comparable<Region> {
      *         else false
      */
     public boolean isOverlappedWithType(Region other) {
-        if (this.type != other.type || !this.chr.equals(other.chr))
+        if (this.type != CNVType.GAINLOSS && other.type != CNVType.GAINLOSS &&
+        		this.type != other.type || !this.chr.equals(other.chr))
             return false;
         if (isBetween(this.getStart(), other.getStart(), other.getEnd())
             || isBetween(this.getEnd(), other.getStart(), other.getEnd())
