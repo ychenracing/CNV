@@ -2,8 +2,6 @@ package utils;
 
 import java.util.List;
 
-import com.sun.org.apache.xpath.internal.operations.And;
-
 public class Region implements Comparable<Region> {
     private String  chr;
     private long    start;
@@ -13,6 +11,10 @@ public class Region implements Comparable<Region> {
     public enum CNVType {
         GAIN("gain"),
         LOSS("loss"),
+        
+        /**
+         * "gain/loss" type of CNV event in conrad results.
+         */
         GAINLOSS("gain/loss");
 
         private String desc;
